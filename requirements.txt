@@ -1,0 +1,9 @@
+--pre
+aiogram==3.0.0b7
+cachetools~=5.0.0
+redis~=4.5.5
+python-dotenv==0.19.2
+
+pydantic~=1.10.4
+
+motor   # for mongodb: dnspython-2.4.2 motor-3.3.1 pymongo-4.5.0
