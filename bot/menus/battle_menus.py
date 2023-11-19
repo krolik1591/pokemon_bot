@@ -35,14 +35,14 @@ def choose_battle_dogemon_menu(user: types.User, dogemons):
     return text, kb
 
 
-def choose_dogemon1(user, game_id):
-    # todo use user.mention_html()
-    text = f'The first move is yours, @{user}, choose your dogeMON!'
+def choose_dogemon(user, game_id):
+    # todo mention html
+    text = f'The first move is yours, {user.username}, choose your dogeMON!'
 
     doge_btns = []
     for dogemon in DOGEMONS:
         doge_btns.append([
-            InlineKeyboardButton(text=f'{dogemon["name"]}', callback_data=f"player1_choose_dogemon|{game_id}|{dogemon['name']}"),
+            InlineKeyboardButton(text=f'{dogemon["name"]}', callback_data=f"choose_dogemon|player1|{game_id}|{dogemon['name']}"),
         ]),
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -51,22 +51,6 @@ def choose_dogemon1(user, game_id):
 
     return text, kb
 
-
-def choose_dogemon2(user, game_id):
-    # todo use user.mention_html()
-    text = f'@{user} choose your dogeMON!'
-
-    doge_btns = []
-    for dogemon in DOGEMONS:
-        doge_btns.append([
-            InlineKeyboardButton(text=f'{dogemon["name"]}', callback_data=f"player2_choose_dogemon|{game_id}|{dogemon['name']}"),
-        ]),
-
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        *doge_btns,
-    ])
-
-    return text, kb
 
 
 def choose_attack_menu(user: types.User, game):

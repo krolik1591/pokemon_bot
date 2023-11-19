@@ -37,68 +37,57 @@ async def choose_attack(call: types.CallbackQuery, state: FSMContext):
 @router.message(F.chat.type != "private", Command("battle"))
 async def cmd_battle(message: types.Message, state: FSMContext):
     text, kb = battle.waiting_battle_menu(message.from_user)
-    await state.bot.send_message(message.chat.id, text, reply_markup=kb)
+    await message.answer(text, reply_markup=kb)
 
 
 @router.callback_query(Text(startswith='join_battle_'))
 async def join_battle(call: types.CallbackQuery, state: FSMContext):
-    player_1 = int(call.data.removeprefix('join_battle_'))
-    if call.from_user.id == player_1:
-        await call.answer('You cannot battle with yourself!')
-        return
-    player_2 = call.from_user.id
+    player_1_id = int(call.data.removeprefix('join_battle_'))
 
-    first_move = random.choice([player_1, player_2])
-    if first_move == player_1:
-        game = Game.new(player_1, player_2)
+    if call.from_user.id == player_1_id:
+        return await call.answer('You cannot battle with yourself!')
 
-        users_tg = await state.bot.get_chat(player_1)
-        username = users_tg.username
+    player_2_id = call.from_user.id
+
+    first_move_player = random.choice([player_1_id, player_2_id])
+
+    if first_move_player == player_1_id:
+        game = Game.new(player_1_id, player_2_id)
+        users_tg = await state.bot.get_chat(player_1_id)
     else:
-        username = call.from_user.username
-        game = Game.new(player_2, player_1)
 
-    game_id = await db.create_new_game(game.to_mongo())
+        users_tg = call.from_user
+        game = Game.new(player_2_id, player_1_id)
 
-    text, kb = battle.choose_dogemon1(username, game_id)
+    game = await game_service.save_game(game)
+
+    text, kb = battle.choose_dogemon(users_tg, game.game_id)
     await call.message.edit_text(text, reply_markup=kb)
 
 
-@router.callback_query(Text(startswith='player1_choose_dogemon|'))
-async def player1_choose_dogemon(call: types.CallbackQuery, state: FSMContext):
-    _, game_id, pokemon1 = call.data.split('|')
+@router.callback_query(Text(startswith='choose_dogemon|'))
+async def player_choose_dogemon(call: types.CallbackQuery, state: FSMContext):
+    _, player, game_id, pokemon = call.data.split('|')
 
     game = await game_service.get_game(game_id)
 
-    if call.from_user.id != game.player1:
-        await call.answer('You cannot choose dogemon for your opponent!')
-        return
+    try:
+        game.ensure_player_move(call.from_user.id)
+        game.select_pokemon(call.from_user.id, pokemon)
+    except AssertionError:
+        return await call.answer('You cannot select dogemon now!')
 
-    game.select_pokemon(game.player1, pokemon1)
-
-    info = await state.bot.get_chat(game.player2)
-    username = info.username
-
+    game.end_move()
     await game_service.save_game(game)
 
-    text, kb = battle.choose_dogemon2(username, game_id)
-    await call.message.edit_text(text, reply_markup=kb)
-
-
-@router.callback_query(Text(startswith='player2_choose_dogemon|'))
-async def player2_choose_dogemon(call: types.CallbackQuery, state: FSMContext):
-    _, game_id, pokemon2 = call.data.split('|')
-
-    game_json = await db.get_game_by_id(game_id)
-    game = Game.from_mongo(game_json)
-
-    if call.from_user.id != game.player2:
-        await call.answer('You cannot choose dogemon for your opponent!')
+    # both players selected pokemon
+    if game.pokemon1 and game.pokemon2:
+        text, kb = special_attack_menu(call.from_user, game)
+        await call.message.edit_text(text, reply_markup=kb)
         return
 
-    game.select_pokemon(game.player2, pokemon2)
-
-    text, kb = special_attack_menu(call.from_user, game)
+    user = await state.bot.get_chat(game.who_move_tg_id())
+    text, kb = battle.choose_dogemon(user, game.game_id)
     await call.message.edit_text(text, reply_markup=kb)
 
 
