@@ -57,6 +57,7 @@ class Game:
     @classmethod
     def from_mongo(cls, mongo_data):
         return cls(
+            game_id=mongo_data['id_'],
             player1=mongo_data['player1'],
             player2=mongo_data['player2'],
             pokemon1=Pokemon.from_mongo(mongo_data['pokemon1']) if mongo_data['pokemon1'] else None,
@@ -66,7 +67,6 @@ class Game:
 
     def to_mongo(self):
         return {
-            "game_id": self.game_id,
             "player1": self.player1,
             "player2": self.player2,
             "pokemon1": self.pokemon1.to_mongo() if self.pokemon1 else None,

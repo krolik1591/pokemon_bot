@@ -38,6 +38,7 @@ async def get_game_by_id(game_id):
 
 
 async def update_game(game_id, game_info):
+    game_id = ObjectId(game_id)
     await mongodb['games'].update_one(
         {
             '_id': game_id

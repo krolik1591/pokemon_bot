@@ -1,4 +1,5 @@
 import random
+from pprint import pprint
 
 from aiogram import F, Router, types
 from aiogram.filters import Command, Text
@@ -8,6 +9,7 @@ from aiogram.utils.deep_linking import create_start_link
 from bot.db import db
 from bot.dogemons import DOGEMONS, DOGEMONS_MAP, DOGEMON_1, DOGEMON_2
 from bot.menus.battle_menus import choose_attack_menu, choose_battle_dogemon_menu, special_attack_menu
+from bot.models import game_service
 from bot.models.game import Game
 from bot.menus import battle
 
@@ -50,26 +52,23 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
     if first_move == player_1:
         game = Game.new(player_1, player_2)
 
-        info = await state.bot.get_chat(player_1)
-        username = info.username
+        users_tg = await state.bot.get_chat(player_1)
+        username = users_tg.username
     else:
         username = call.from_user.username
         game = Game.new(player_2, player_1)
 
     game_id = await db.create_new_game(game.to_mongo())
-    Game.game_id = game_id
-    await db.update_game(game_id, game.to_mongo())
 
     text, kb = battle.choose_dogemon1(username, game_id)
     await call.message.edit_text(text, reply_markup=kb)
 
 
-@router.callback_query(Text(startswith='choose_dogemon|'))
-async def opponent_choose_dogemon_(call: types.CallbackQuery, state: FSMContext):
+@router.callback_query(Text(startswith='player1_choose_dogemon|'))
+async def player1_choose_dogemon(call: types.CallbackQuery, state: FSMContext):
     _, game_id, pokemon1 = call.data.split('|')
 
-    game_json = await db.get_game_by_id(game_id)
-    game = Game.from_mongo(game_json)
+    game = await game_service.get_game(game_id)
 
     if call.from_user.id != game.player1:
         await call.answer('You cannot choose dogemon for your opponent!')
@@ -80,14 +79,14 @@ async def opponent_choose_dogemon_(call: types.CallbackQuery, state: FSMContext)
     info = await state.bot.get_chat(game.player2)
     username = info.username
 
-    await db.update_game(game.game_id, game.to_mongo())
+    await game_service.save_game(game)
 
     text, kb = battle.choose_dogemon2(username, game_id)
     await call.message.edit_text(text, reply_markup=kb)
 
 
-@router.callback_query(Text(startswith='start_fight|'))
-async def fight_attack(call: types.CallbackQuery, state: FSMContext):
+@router.callback_query(Text(startswith='player2_choose_dogemon|'))
+async def player2_choose_dogemon(call: types.CallbackQuery, state: FSMContext):
     _, game_id, pokemon2 = call.data.split('|')
 
     game_json = await db.get_game_by_id(game_id)
@@ -99,9 +98,6 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
 
     game.select_pokemon(game.player2, pokemon2)
 
-    # dogemon_info = find_dogemon_info(game.pokemon1.name)
-    # enemy_dogemon_info = find_dogemon_info(pokemon2)
-    print(game.pokemon2)
     text, kb = special_attack_menu(call.from_user, game)
     await call.message.edit_text(text, reply_markup=kb)
 

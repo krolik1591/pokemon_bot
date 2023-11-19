@@ -40,7 +40,7 @@ class Pokemon:
 
     def to_mongo(self):
         return {
-            "name": self.name,
+            'name': self.name,
             'hp': self.hp,
             'max_hp': self.max_hp,
             'mp': self.mp,

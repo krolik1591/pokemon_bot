@@ -42,7 +42,7 @@ def choose_dogemon1(user, game_id):
     doge_btns = []
     for dogemon in DOGEMONS:
         doge_btns.append([
-            InlineKeyboardButton(text=f'{dogemon["name"]}', callback_data=f"choose_dogemon|{game_id}|{dogemon['name']}"),
+            InlineKeyboardButton(text=f'{dogemon["name"]}', callback_data=f"player1_choose_dogemon|{game_id}|{dogemon['name']}"),
         ]),
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -59,7 +59,7 @@ def choose_dogemon2(user, game_id):
     doge_btns = []
     for dogemon in DOGEMONS:
         doge_btns.append([
-            InlineKeyboardButton(text=f'{dogemon["name"]}', callback_data=f"start_fight|{game_id}|{dogemon['name']}"),
+            InlineKeyboardButton(text=f'{dogemon["name"]}', callback_data=f"player2_choose_dogemon|{game_id}|{dogemon['name']}"),
         ]),
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
