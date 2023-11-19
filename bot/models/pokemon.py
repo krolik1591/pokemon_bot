@@ -26,6 +26,18 @@ class Pokemon:
             type=base_pokemon["type"]
         )
 
+    @classmethod
+    def from_mongo(cls, mongo_data):
+        return cls(
+            name=mongo_data["name"],
+            hp=mongo_data["hp"],
+            max_hp=mongo_data["max_hp"],
+            mp=mongo_data["mp"],
+            max_mp=mongo_data["max_mp"],
+            lvl=mongo_data["lvl"],
+            type=mongo_data["type"]
+        )
+
     def to_mongo(self):
         return {
             "name": self.name,

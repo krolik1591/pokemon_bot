@@ -1,6 +1,7 @@
 from aiogram import types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from bot.dogemons import DOGEMONS
 from bot.models.game import Game
 from utils.utils import get_username_or_link
 
@@ -29,6 +30,40 @@ def choose_battle_dogemon_menu(user: types.User, dogemons):
         [
             InlineKeyboardButton(text='🔙 Back', callback_data="main_menu"),
         ]
+    ])
+
+    return text, kb
+
+
+def choose_dogemon1(user, game_id):
+    # todo use user.mention_html()
+    text = f'The first move is yours, @{user}, choose your dogeMON!'
+
+    doge_btns = []
+    for dogemon in DOGEMONS:
+        doge_btns.append([
+            InlineKeyboardButton(text=f'{dogemon["name"]}', callback_data=f"choose_dogemon|{game_id}|{dogemon['name']}"),
+        ]),
+
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        *doge_btns,
+    ])
+
+    return text, kb
+
+
+def choose_dogemon2(user, game_id):
+    # todo use user.mention_html()
+    text = f'@{user} choose your dogeMON!'
+
+    doge_btns = []
+    for dogemon in DOGEMONS:
+        doge_btns.append([
+            InlineKeyboardButton(text=f'{dogemon["name"]}', callback_data=f"start_fight|{game_id}|{dogemon['name']}"),
+        ]),
+
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        *doge_btns,
     ])
 
     return text, kb

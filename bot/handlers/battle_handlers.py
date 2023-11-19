@@ -40,11 +40,70 @@ async def cmd_battle(message: types.Message, state: FSMContext):
 
 @router.callback_query(Text(startswith='join_battle_'))
 async def join_battle(call: types.CallbackQuery, state: FSMContext):
-    player_1 = call.data.removeprefix('join_battle_')
+    player_1 = int(call.data.removeprefix('join_battle_'))
+    if call.from_user.id == player_1:
+        await call.answer('You cannot battle with yourself!')
+        return
     player_2 = call.from_user.id
-    game = Game.new(player_1, player_2)
-    game_id = await db.create_new_game({'player_1': player_1, 'player_2': player_2})
 
+    first_move = random.choice([player_1, player_2])
+    if first_move == player_1:
+        game = Game.new(player_1, player_2)
+
+        info = await state.bot.get_chat(player_1)
+        username = info.username
+    else:
+        username = call.from_user.username
+        game = Game.new(player_2, player_1)
+
+    game_id = await db.create_new_game(game.to_mongo())
+    Game.game_id = game_id
+    await db.update_game(game_id, game.to_mongo())
+
+    text, kb = battle.choose_dogemon1(username, game_id)
+    await call.message.edit_text(text, reply_markup=kb)
+
+
+@router.callback_query(Text(startswith='choose_dogemon|'))
+async def opponent_choose_dogemon_(call: types.CallbackQuery, state: FSMContext):
+    _, game_id, pokemon1 = call.data.split('|')
+
+    game_json = await db.get_game_by_id(game_id)
+    game = Game.from_mongo(game_json)
+
+    if call.from_user.id != game.player1:
+        await call.answer('You cannot choose dogemon for your opponent!')
+        return
+
+    game.select_pokemon(game.player1, pokemon1)
+
+    info = await state.bot.get_chat(game.player2)
+    username = info.username
+
+    await db.update_game(game.game_id, game.to_mongo())
+
+    text, kb = battle.choose_dogemon2(username, game_id)
+    await call.message.edit_text(text, reply_markup=kb)
+
+
+@router.callback_query(Text(startswith='start_fight|'))
+async def fight_attack(call: types.CallbackQuery, state: FSMContext):
+    _, game_id, pokemon2 = call.data.split('|')
+
+    game_json = await db.get_game_by_id(game_id)
+    game = Game.from_mongo(game_json)
+
+    if call.from_user.id != game.player2:
+        await call.answer('You cannot choose dogemon for your opponent!')
+        return
+
+    game.select_pokemon(game.player2, pokemon2)
+
+    # dogemon_info = find_dogemon_info(game.pokemon1.name)
+    # enemy_dogemon_info = find_dogemon_info(pokemon2)
+    print(game.pokemon2)
+    text, kb = special_attack_menu(call.from_user, game)
+    await call.message.edit_text(text, reply_markup=kb)
 
 
 @router.callback_query(Text(startswith='fight|'))

@@ -14,7 +14,15 @@ DOGEMON_2 = {
     'type': 'Water'
 }
 
-DOGEMONS = [DOGEMON_1, DOGEMON_2]
+DOGEMON_3 = {
+    'name': 'zaii',
+    'hp': 200,
+    'mp': 170,
+    'lvl': 13,
+    'type': 'Earth'
+}
+
+DOGEMONS = [DOGEMON_1, DOGEMON_2, DOGEMON_3]
 DOGEMONS_MAP = {
     pokemon["name"]: pokemon
     for pokemon in DOGEMONS

@@ -27,12 +27,23 @@ class Game:
     def flee(self):
         pass
 
+    def select_pokemon(self, player, pokemon_name):
+        if self._which_player(player) == 1:
+            self.pokemon1 = Pokemon.new(pokemon_name)
+        else:
+            self.pokemon2 = Pokemon.new(pokemon_name)
+
     def end_move(self):
         self.is_player1_move = not self.is_player1_move
 
     def ensure_player_move(self, player):
-        who_must_move = self.player1 if self.is_player1_move else self.player2
-        assert player == who_must_move, "not ur move"
+        who_need_to_move = 1 if self.is_player1_move else 2
+        assert self._which_player(player) == who_need_to_move, "not ur move"
+
+    def _which_player(self, player):
+        player_index = [self.player1, self.player2].index(player)
+        assert player_index != -1, "player not found"
+        return player_index + 1    # 1 or 2
 
     # serialization
 
@@ -43,22 +54,14 @@ class Game:
             player2=player2,
         )
 
-    def select_pokemon(self, player, pokemon_name):
-        if self.which_player(player) == 1:
-            self.pokemon1 = Pokemon.new(pokemon_name)
-        else:
-            self.pokemon2 = Pokemon.new(pokemon_name)
-
-    def which_player(self, player):
-        index_player = [self.player1, self.player2].index(player)
-        assert index_player != -1, "player not found"
-        return index_player + 1    # 1 or 2
-
     @classmethod
     def from_mongo(cls, mongo_data):
         return cls(
-            game_id=mongo_data.id,
-            player1=mongo_data.player1,
+            player1=mongo_data['player1'],
+            player2=mongo_data['player2'],
+            pokemon1=Pokemon.from_mongo(mongo_data['pokemon1']) if mongo_data['pokemon1'] else None,
+            pokemon2=Pokemon.from_mongo(mongo_data['pokemon2']) if mongo_data['pokemon2'] else None,
+            is_player1_move=mongo_data['is_player1_move']
         )
 
     def to_mongo(self):
@@ -66,7 +69,7 @@ class Game:
             "game_id": self.game_id,
             "player1": self.player1,
             "player2": self.player2,
-            "pokemon1": self.pokemon1.to_mongo(),
-            "pokemon2": self.pokemon2.to_mongo(),
+            "pokemon1": self.pokemon1.to_mongo() if self.pokemon1 else None,
+            "pokemon2": self.pokemon2.to_mongo() if self.pokemon2 else None,
             "is_player1_move": self.is_player1_move
         }
