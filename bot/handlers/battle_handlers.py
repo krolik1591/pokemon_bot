@@ -77,11 +77,12 @@ async def player_choose_dogemon(call: types.CallbackQuery, state: FSMContext):
     except AssertionError:
         return await call.answer('You cannot select dogemon now!')
 
-    game.end_move()
+    if not game.all_pokemons_selected():  # user who select latest doesn't end his move
+        game.end_move()
     await game_service.save_game(game)
 
     # both players selected pokemon
-    if game.pokemon1 and game.pokemon2:
+    if game.all_pokemons_selected():
         text, kb = special_attack_menu(call.from_user, game)
         await call.message.edit_text(text, reply_markup=kb)
         return

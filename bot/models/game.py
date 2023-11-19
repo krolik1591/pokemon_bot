@@ -50,6 +50,9 @@ class Game:
     def who_move_tg_id(self):
         return self.player1 if self.is_player1_move else self.player2
 
+    def all_pokemons_selected(self):
+        return self.pokemon1 and self.pokemon2
+
     # serialization
 
     @classmethod
