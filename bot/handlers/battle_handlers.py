@@ -9,7 +9,6 @@ from bot.dogemons import DOGEMONS, DOGEMONS_MAP
 from bot.menus import battle
 from bot.menus.battle_menus import choose_attack_menu, choose_dogemon
 from bot.models import game_service
-from bot.models.errors import PokemonDead
 from bot.models.game import Game
 from bot.models.player import Player
 
@@ -51,9 +50,9 @@ async def player_choose_dogemon(call: types.CallbackQuery, state: FSMContext):
     if not game.is_player_move(call.from_user.id):
         return await call.answer('You cannot select dogemon now!')
 
-    game.select_pokemon(call.from_user.id, pokemon)
+    game.select_pokemon(pokemon)
 
-    if not game.all_pokemons_selected():
+    if not game.is_all_pokemons_selected():
         game.end_move()  # end move ONLY if not all pokemons are selected
         await game_service.save_game(game)
 
@@ -86,10 +85,11 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     await game_service.save_game(game)
 
     # check next player pokemons
-    if not game.check_if_pokemon_alive():
+    if not game.is_all_pokemons_selected():
 
-        if not game.have_alive_pokemons():
-            winner, loser = game.get_winner_loser()
+        is_game_over = game.is_game_over()
+        if is_game_over:
+            winner, loser = is_game_over
             text = f'{winner.mention} you are win!'
             await call.message.edit_text(text)
             # todo send money?

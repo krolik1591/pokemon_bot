@@ -9,8 +9,6 @@ class Pokemon:
     base_attack: int
     hp: int
     max_hp: int
-    mp: int
-    max_mp: int
     lvl: int
     type: str
 
@@ -22,8 +20,6 @@ class Pokemon:
             base_attack=base_pokemon["base_attack"],
             max_hp=base_pokemon["hp"],
             hp=base_pokemon["hp"],
-            max_mp=base_pokemon["mp"],
-            mp=base_pokemon["mp"],
             lvl=base_pokemon["lvl"],
             type=base_pokemon["type"]
         )
@@ -38,8 +34,6 @@ class Pokemon:
             base_attack=mongo_data["base_attack"],
             hp=mongo_data["hp"],
             max_hp=mongo_data["max_hp"],
-            mp=mongo_data["mp"],
-            max_mp=mongo_data["max_mp"],
             lvl=mongo_data["lvl"],
             type=mongo_data["type"]
         )
@@ -50,8 +44,6 @@ class Pokemon:
             'base_attack': self.base_attack,
             'hp': self.hp,
             'max_hp': self.max_hp,
-            'mp': self.mp,
-            'max_mp': self.max_mp,
             'lvl': self.lvl,
             'type': self.type
         }
