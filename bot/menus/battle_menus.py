@@ -1,9 +1,22 @@
+import random
+
 from aiogram import types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from bot.dogemons import DOGEMONS
 from bot.models.game import Game
+from bot.models.player import Player
+from bot.models.pokemon import Pokemon
 from utils.utils import get_username_or_link
+
+POKEMON_TYPE = {
+    'Fire': '🔥',
+    'Water': '💧',
+    'Grass': '🌱',
+    'Earth': '🌎',
+    'Air': '💨',
+    'Electric': '⚡️',
+}
 
 
 def waiting_battle_menu(user: types.User):
@@ -15,34 +28,20 @@ def waiting_battle_menu(user: types.User):
     return text, kb
 
 
-def choose_battle_dogemon_menu(user: types.User, dogemons):
-    user_link = user.mention_html()
-    text = f'{user_link}, is ready for battle!\n\n' \
-           f'Choose an dogeMON from the list below:'
+def choose_dogemon(game, first_move=False, callback='choose_dogemon'):
+    player, _ = game.who_move_tg_id_pokemon()
 
-    btns = []
-    for dogemon in dogemons:
-        btns.append([InlineKeyboardButton(text=f'Lvl. {dogemon["lvl"]} {dogemon["name"]}',
-                                          callback_data=f'battle_dogeMON_{dogemon["name"]}')])
-
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        *btns,
-        [
-            InlineKeyboardButton(text='🔙 Back', callback_data="main_menu"),
-        ]
-    ])
-
-    return text, kb
-
-
-def choose_dogemon(user, game_id):
-    # todo mention html
-    text = f'The first move is yours, {user.username}, choose your dogeMON!'
+    if first_move:
+        text = f'The first move is yours, {player.mention}, choose your dogeMON!'
+    else:
+        text = f'{player.mention} choose your dogeMON!'
 
     doge_btns = []
-    for dogemon in DOGEMONS:
+
+    for dogemon_name in player.pokemons_pool:
         doge_btns.append([
-            InlineKeyboardButton(text=f'{dogemon["name"]}', callback_data=f"choose_dogemon|player1|{game_id}|{dogemon['name']}"),
+            InlineKeyboardButton(text=f'{dogemon_name}',
+                                 callback_data=f"{callback}|{game.game_id}|{dogemon_name}"),
         ]),
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -52,9 +51,8 @@ def choose_dogemon(user, game_id):
     return text, kb
 
 
-
-def choose_attack_menu(user: types.User, game):
-    text = attack_text(user, game)
+def choose_attack_menu(game):
+    text = attack_text(game)
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -62,16 +60,16 @@ def choose_attack_menu(user: types.User, game):
             InlineKeyboardButton(text='☄️ Special Atc.', callback_data=f"fight|special_atc|{game.game_id}"),
         ],
         [
-            InlineKeyboardButton(text='💫 Capture', callback_data=f"fight|capture_atc|{game.game_id}"),
-            InlineKeyboardButton(text='🏃 Flee', callback_data=f"fight|flee|{game.game_id}"),
+            InlineKeyboardButton(text='👊 Power Atc.', callback_data=f"fight|power_atk|{game.game_id}"),
+            InlineKeyboardButton(text='🀄️ Special Card', callback_data=f"fight|flee|{game.game_id}"),
         ],
     ])
 
     return text, kb
 
 
-def special_attack_menu(user, game):
-    text = attack_text(user, game)
+def special_attack_menu(game):
+    text = attack_text(game)
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text='☄️ Use Burn', callback_data="user_special_atc")],
@@ -81,18 +79,17 @@ def special_attack_menu(user, game):
     return text, kb
 
 
-def attack_text(user, game: Game):
-    user_link = user.mention_html()
-    dogemon_text = f"<b>Lvl. {game.pokemon1.lvl} <i>{game.pokemon1.name}</i></b>\n" \
-                   f"150/{game.pokemon1.hp}\n" \
-                   f"100/{game.pokemon1.mp}"
+def attack_text(game: Game):
+    dogemon_text = _pokemon_text(game.pokemon1, game.player1)
+    enemy_dogemon_text = _pokemon_text(game.pokemon2, game.player2)
 
-    enemy_dogemon_text = f"<b>Lvl. {game.pokemon2.lvl} <i>{game.pokemon2.name}</i></b>\n" \
-                         f"150/{game.pokemon2.hp}\n" \
-                         f"100/{game.pokemon2.mp}"
-
-    return f"{user_link} encountered a <b>Lvl. {game.pokemon2.lvl} <i>{game.pokemon2.name}</i></b> which is a <b>{game.pokemon2.type}</b> type dogeMON!\n\n" \
-           f"⚔They've chosen to use <b><i>{game.pokemon1.name}</i> a Lvl. " \
-           f"{game.pokemon2.lvl} <i>{game.pokemon2.name}</i></b>, which is a <b>{game.pokemon1.type}</b> type dogeMON!\n\n" \
+    player, _ = game.who_move_tg_id_pokemon()
+    return f"{player.mention}, it's your turn to attack!\n\n" \
            f"{dogemon_text}\n\n" \
            f"{enemy_dogemon_text}"
+
+
+def _pokemon_text(pokemon: Pokemon, player: Player):
+    return f"<b>Lvl. {pokemon.lvl} <i>{pokemon.name} {POKEMON_TYPE[pokemon.type]} - {player.mention}</i></b>\n" \
+           f"🟥{pokemon.hp}/{pokemon.max_hp}\n" \
+           f"🟦{pokemon.mp}/{pokemon.max_mp}"

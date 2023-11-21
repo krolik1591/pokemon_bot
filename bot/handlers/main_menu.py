@@ -1,12 +1,10 @@
-from aiogram import F, Router, types
+from aiogram import F, Router
 from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery, Message
 
 from bot.db import db
-from bot.menus.battle_menus import choose_battle_dogemon_menu
 from bot.menus.main_menu import main_menu
-from utils.utils import get_username_or_link
 
 router = Router()
 
@@ -26,5 +24,3 @@ async def edit_to_main_menu(callback: CallbackQuery):
     message = callback.message
     text, kb = main_menu(message.from_user)
     await message.edit_text(text, reply_markup=kb)
-
-
