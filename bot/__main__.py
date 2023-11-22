@@ -7,7 +7,7 @@ from aiogram.fsm.storage.redis import RedisStorage
 
 from bot.db.first_start import mongo_first_start
 from bot.handlers import routers
-from utils.config_reader import config
+from bot.utils.config_reader import config
 
 
 async def main(bot, dp):

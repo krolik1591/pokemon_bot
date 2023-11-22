@@ -22,3 +22,7 @@ class Spell:
         if count is not None:  # if None => don't change (count = max_count by default)
             spell.count = count
         return spell
+
+    def decrease_count(self):
+        assert self.count > 0, "No more spells"
+        self.count -= 1

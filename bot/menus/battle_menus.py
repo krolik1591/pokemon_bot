@@ -1,13 +1,10 @@
-from aiogram import types
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, User
 
-from bot.models.game import Game
-from bot.models.player import Player
-from bot.models.pokemon_types import TYPE_STR
-from bot.models.spell import Spell
+from bot.models import Game, Player, TYPES_STR, Spell
+from bot.utils.hp_bar import hp_bar
 
 
-def waiting_battle_menu(user: types.User):
+def waiting_battle_menu(user: User):
     text = f'{user.mention_html()} waiting for an opponent...'
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text='Join', callback_data=f"join_battle_{user.id}")],
@@ -18,10 +15,10 @@ def waiting_battle_menu(user: types.User):
 
 def select_dogemon_menu(game, first_move=False, latest_actions=None):
     def _pokemon_btn(pokemon_name):
-        return InlineKeyboardButton(text=f'{pokemon_name}',
+        return InlineKeyboardButton(text=pokemon_name,
                                     callback_data=f"select_dogemon_menu|{game.game_id}|{pokemon_name}")
 
-    player = game.who_move_player()
+    player = game.get_attacker()
     actions_text = _actions_text(latest_actions)
     select_pok_text = f'The first move is yours, {player.mention}, choose your dogeMON!' \
         if first_move else f'{player.mention} choose your dogeMON!'
@@ -39,12 +36,12 @@ def select_dogemon_menu(game, first_move=False, latest_actions=None):
     return text, kb
 
 
-def battle_menu(game, latest_actions=None):
+def battle_menu(game: Game, latest_actions=None):
     dogemon_text = _pokemon_text(game.player1)
     enemy_dogemon_text = _pokemon_text(game.player2)
     actions_text = _actions_text(latest_actions)
 
-    player = game.who_move_player()
+    player = game.get_attacker()
 
     text = f"{player.mention}, it's your turn to attack!\n\n" \
            f"{dogemon_text}\n\n" \
@@ -71,7 +68,7 @@ def select_attack_menu(game: Game):
         btn_text = f'{spell.name} ({spell_icon}) [x{spell.count}]'
         return InlineKeyboardButton(text=btn_text, callback_data=f"fight|{spell.name}|{game.game_id}")
 
-    spells = game.who_move_player().pokemon.spells
+    spells = game.get_attacker().pokemon.spells
 
     spell_btns = [_spell_btn(spell) for spell in spells]
     spell_btns = _columns(spell_btns, 2)  # two columns
@@ -95,27 +92,8 @@ def _pokemon_text(player: Player):
     pokemon = player.pokemon
     shield_icon = "🛡" if pokemon.shield else ""
 
-    return f"<b>Lvl. {pokemon.lvl} <i>{pokemon.name} {TYPE_STR[pokemon.type]} - {player.mention}</i></b>\n" \
-           f"{_hp_bar(pokemon.hp, pokemon.max_hp)} {shield_icon}"
-
-
-def _hp_bar(hp, max_hp):
-    TOTAL_SYMBOLS = 10
-    F1, F2, F3, EMPTY = "🟥", "🟧", "🟩", " .. "  # red yellow green empty
-
-    hp_percent = hp / max_hp
-    filled_symbols_count = round(TOTAL_SYMBOLS * hp_percent)
-    empty_symbols_count = TOTAL_SYMBOLS - filled_symbols_count
-
-    filled_symbol = F1
-    if hp_percent > 0.3:
-        filled_symbol = F2
-    if hp_percent > 0.6:
-        filled_symbol = F3
-
-    bar = filled_symbol * filled_symbols_count + EMPTY * empty_symbols_count
-
-    return f"HP: [{bar}] {hp} / {max_hp}"
+    return f"<b>Lvl. {pokemon.lvl} <i>{pokemon.name} {TYPES_STR[pokemon.type]} - {player.mention}</i></b>\n" \
+           f"{hp_bar(pokemon.hp, pokemon.max_hp)} {shield_icon}"
 
 
 def _actions_text(actions: [str]):

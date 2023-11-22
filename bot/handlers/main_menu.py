@@ -1,6 +1,5 @@
 from aiogram import F, Router
 from aiogram.filters import Command, Text
-from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
 from bot.db import db
@@ -10,7 +9,7 @@ router = Router()
 
 
 @router.message(F.chat.type == "private", Command("start"))
-async def cmd_start(message: Message, state: FSMContext):
+async def cmd_start(message: Message):
     exist = await db.is_user_exist(message.from_user.id)
     if not exist:
         await db.create_new_user(message.from_user.id)

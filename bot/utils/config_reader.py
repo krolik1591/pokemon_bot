@@ -9,11 +9,6 @@ class Settings(BaseSettings):
     mongo_connection_string: str
     fsm_mode: str
     redis: Optional[RedisDsn]
-    admin_ids: str
-
-    @validator("admin_ids")
-    def is_admin(cls, v: str):
-        return v.split(',')
 
     @validator("fsm_mode")
     def fsm_type_check(cls, v):

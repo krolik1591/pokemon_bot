@@ -2,7 +2,7 @@ from bot.db import db
 from bot.models.game import Game
 
 
-async def get_game(game_id):
+async def get_game(game_id) -> Game:
     game_json = await db.get_game_by_id(game_id)
     return Game.from_mongo(game_json)
 

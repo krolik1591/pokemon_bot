@@ -3,10 +3,8 @@ import time
 from dataclasses import dataclass
 from typing import Optional
 
-from bot.const import TIMEOUT
-from bot.models.player import Player
-from bot.models.pokemon_types import WEAKNESS
-from bot.models.spell import Spell
+from bot.data.const import TIMEOUT
+from bot.models import Player, WEAKNESS, Spell
 
 
 @dataclass
@@ -17,49 +15,36 @@ class Game:
     is_player1_move: bool = True
 
     def select_pokemon(self, pokemon_name):
-        self.who_move_player().select_pokemon(pokemon_name)
+        self.get_attacker().select_pokemon(pokemon_name)
 
     # returns list of actions
     def cast_spell(self, spell_name: str) -> [str]:
-        attack, defence = self.get_attack_defence()
-        spell_info: Spell = next(spell for spell in attack.pokemon.spells if spell.name == spell_name)
+        attacker, defencer = self.get_attacker_defencer()
+        spell = attacker.pokemon.get_spell_by_name(spell_name)
 
-        if spell_info.count <= 0:
-            raise Exception("No more spells")
-
-        spell_info.count -= 1
+        # "use" spell. crash if no spells left
+        spell.decrease_count()
 
         actions = []
 
-        if spell_info.is_defence:
-            if attack.pokemon.shield:
-                raise Exception("Already have shield")
-            attack.pokemon.shield = True
-            actions.append(f"{attack.mention} casted shield")
+        # just set shield if spell is defence
+        if spell.is_defence:
+            attacker.pokemon.set_shield()
+            actions.append(f"{attacker.mention} casted shield")
             return actions
 
-        # todo extract code below to separate func
+        # calculate dmg based on spell and pokemons types
+        dmg = _calc_dmg(spell, attacker, defencer)
 
-        dmg = spell_info.attack
+        if defencer.pokemon.shield:
+            is_attack_canceled = defencer.pokemon.attack_shield()
+            if is_attack_canceled:
+                actions.append(f"{attacker.mention} attack was canceled by defence spell")
+                return actions
+            actions.append(f"{attacker.mention} shield was broken")
 
-        if attack.pokemon.type in WEAKNESS[defence.pokemon.type]:
-            dmg += random.randint(3, 8)
-        if defence.pokemon.type in WEAKNESS[attack.pokemon.type]:
-            dmg -= random.randint(3, 8)
-
-        # attacker has 50% chance to miss when defender has shield
-        if defence.pokemon.shield:
-            defence.pokemon.shield = False
-            if random.choice((True, False)):
-                actions.append(f"{attack.mention} attack was canceled by defence spell. Protected {dmg} dmg")
-                return actions  # return coz attack was canceled
-            else:
-                actions.append(f"{attack.mention} shield was broken :(")
-
-        defence.pokemon.hp -= dmg
-        actions.append(f"{attack.mention} dealt {dmg} dmg by {spell_info.name}")
-
-        is_pokemon_dead = defence.check_pokemons()
+        is_pokemon_dead = defencer.attack_pokemon(dmg)
+        actions.append(f"{attacker.mention} dealt {dmg} dmg by {spell.name}")
         if is_pokemon_dead:
             actions.append(f"{is_pokemon_dead.name} dead :(")
 
@@ -70,7 +55,7 @@ class Game:
         self.update_last_move_time()  # start his move, reset move time
 
     def update_last_move_time(self):
-        self.who_move_player().last_move_time = time.time()
+        self.get_attacker().last_move_time = time.time()
 
     def is_game_over(self):
         # return (winner, loser) or None
@@ -79,34 +64,31 @@ class Game:
         if self.player2.is_lose():
             return self.player1, self.player2
 
-    def get_winner_if_time_out(self):
+    def is_game_over_coz_timeout(self):
         # return winner or None
-        attacker, defencer = self.get_attack_defence()
+        attacker, defencer = self.get_attacker_defencer()
         delta_time = time.time() - attacker.last_move_time
         if delta_time > TIMEOUT:
             return defencer
         return None
 
-    def get_attack_defence(self):
-        if self.who_move_index() == 1:
+    def get_attacker_defencer(self):
+        if self.get_attacker_index() == 1:
             return self.player1, self.player2
         return self.player2, self.player1
 
-    def who_move_index(self) -> 1 | 2:
+    def get_attacker_index(self) -> 1 | 2:
         return 1 if self.is_player1_move else 2
 
-    def who_move_player(self) -> Optional[Player]:
+    def get_attacker(self) -> Optional[Player]:
         return self.player1 if self.is_player1_move else self.player2
 
-    def is_player_move(self, player_id: int):
+    def is_player_attacks_now(self, player_id: int):
         who_must_move = self.player1.id if self.is_player1_move else self.player2.id
         return player_id == who_must_move
 
     def is_all_pokemons_selected(self) -> bool:
         return bool(self.player1.pokemon and self.player2.pokemon)
-
-
-    # serialization
 
     @classmethod
     def new(cls, player1: Player, player2: Player):
@@ -131,3 +113,14 @@ class Game:
             "player2": self.player2.to_mongo(),
             "is_player1_move": self.is_player1_move
         }
+
+
+def _calc_dmg(spell: Spell, attack: Player, defence: Player):
+    dmg = spell.attack
+
+    if attack.pokemon.type in WEAKNESS[defence.pokemon.type]:
+        dmg += random.randint(3, 8)
+    if defence.pokemon.type in WEAKNESS[attack.pokemon.type]:
+        dmg -= random.randint(3, 8)
+
+    return dmg

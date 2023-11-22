@@ -7,25 +7,27 @@ from aiogram.types import Chat, User
 from aiogram.utils import markdown
 from aiogram.utils.link import create_tg_link
 
-from bot.dogemons import DOGEMONS
+from bot.data.dogemons import DOGEMONS
 from bot.models.pokemon import Pokemon
 
 
 @dataclass
 class Player:
-    id: int
-    mention: str
-    pokemons_pool: list[str]
-    last_move_time: float
-    pokemon: Optional[Pokemon] = None
+    id: int  # telegram user id
+    mention: str  # user mention
+
+    pokemons_pool: list[str]  # names of pokemons that can be selected
+    last_move_time: float  # unix time of last meaningful move (successful attack)
+    pokemon: Optional[Pokemon] = None   # active pokemon
 
     def select_pokemon(self, pokemon_name: str):
         assert self.pokemon is None, "pokemon already selected"
         self.pokemons_pool.remove(pokemon_name)
         self.pokemon = Pokemon.new(pokemon_name)
 
-    def check_pokemons(self):
-        if not self.pokemon or self.pokemon.hp > 0:
+    def attack_pokemon(self, dmg):
+        self.pokemon.hp -= dmg
+        if self.pokemon.hp > 0:
             return None
         pokemon = self.pokemon
         self.pokemon = None

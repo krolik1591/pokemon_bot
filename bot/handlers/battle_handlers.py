@@ -1,5 +1,4 @@
 import asyncio
-import random
 
 from aiogram import F, Router, types
 from aiogram.filters import Command, Text
@@ -7,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 
 from bot.menus import battle
 from bot.menus.battle_menus import battle_menu, select_dogemon_menu, select_attack_menu
-from bot.models import game_service
+from bot.utils import game_service
 from bot.models.game import Game
 from bot.models.player import Player
 
@@ -48,7 +47,7 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
 
     game = await game_service.get_game(game_id)
 
-    if not game.is_player_move(call.from_user.id):
+    if not game.is_player_attacks_now(call.from_user.id):
         return await call.answer('You cannot select dogemon now!')
 
     # need to working `BACK` button
@@ -71,12 +70,12 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(Text(startswith='fight_menu|'))
-async def fight_menu(call: types.CallbackQuery, state: FSMContext):
+async def fight_menu(call: types.CallbackQuery):
     _, action, game_id = call.data.split('|')
 
     game = await game_service.get_game(game_id)
 
-    if not game.is_player_move(call.from_user.id):
+    if not game.is_player_attacks_now(call.from_user.id):
         return await call.answer('Not your turn!')
 
     if action == 'attack':
@@ -86,8 +85,10 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
     if action == 'special_cards':
         pass
 
+    # todo move flee to separate handler to allow both players to flee
+
     if action == 'flee':
-        _, winner = game.get_attack_defence()
+        _, winner = game.get_attacker_defencer()
         text = f'{winner.mention} you are win!'
         await call.message.edit_text(text)
         # todo end game
@@ -95,12 +96,12 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(Text(startswith='fight|'))
-async def fight_attack(call: types.CallbackQuery, state: FSMContext):
+async def fight_attack(call: types.CallbackQuery):
     _, spell_name, game_id = call.data.split('|')
 
     game = await game_service.get_game(game_id)
 
-    if not game.is_player_move(call.from_user.id):
+    if not game.is_player_attacks_now(call.from_user.id):
         return await call.answer('Not your turn!')
 
     try:
@@ -136,11 +137,11 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
     _, game_id = call.data.split('|')
     game = await game_service.get_game(game_id)
 
-    _, defender = game.get_attack_defence()
+    _, defender = game.get_attacker_defencer()
     if call.from_user.id != defender.id:
         return await call.answer('Only defender can use this btn')
 
-    winner = game.get_winner_if_time_out()
+    winner = game.is_game_over_coz_timeout()
     if winner:
         text = f'{winner.mention} you are win, cause your opponent is timeout!'
         await call.message.edit_text(text)

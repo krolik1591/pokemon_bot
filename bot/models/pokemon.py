@@ -1,9 +1,19 @@
+import random
 from dataclasses import dataclass
-from typing import Optional
+from typing import Union, Literal
 
-from bot.dogemons import DOGEMONS_MAP
-from bot.models.pokemon_base import PokemonBase
+from bot.data.dogemons import DOGEMONS_MAP
+from bot.models.pokemon_types import PokemonType
 from bot.models.spell import Spell
+
+
+@dataclass
+class PokemonBase:
+    name: str
+    hp: int
+    lvl: int
+    type: PokemonType
+    spells: list[Spell]
 
 
 @dataclass
@@ -28,6 +38,19 @@ class Pokemon:
     @property
     def type(self):
         return self.base_pokemon.type
+
+    def set_shield(self):
+        if self.shield:
+            raise Exception("Already have shield")
+        self.shield = True
+
+    def attack_shield(self) -> str:
+        assert self.shield, "No shield"
+        self.shield = False
+        return random.choice((True, False))  # is attack cancelled
+
+    def get_spell_by_name(self, spell_name: str) -> Spell:
+        return next(spell for spell in self.spells if spell.name == spell_name)
 
     @classmethod
     def new(cls, pokemon_name):

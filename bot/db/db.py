@@ -1,6 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from utils.config_reader import config
+from bot.utils.config_reader import config
 
 mongodb = AsyncIOMotorClient(config.mongo_connection_string)["PokemonBot"]
 

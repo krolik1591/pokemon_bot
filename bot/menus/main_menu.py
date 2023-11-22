@@ -1,8 +1,6 @@
 from aiogram import types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from utils.utils import get_username_or_link
-
 
 def main_menu(user: types.User):
     user_link = user.mention_html()
