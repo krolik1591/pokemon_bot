@@ -35,7 +35,9 @@ class Game:
         actions = []
 
         if spell_info.is_defence:
-            defence.pokemon.shield = True
+            if attack.pokemon.shield:
+                raise Exception("Already have shield")
+            attack.pokemon.shield = True
             actions.append(f"{attack.mention} casted shield")
             return actions
 

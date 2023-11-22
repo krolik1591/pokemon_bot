@@ -59,12 +59,11 @@ def battle_menu(game, latest_actions=None):
     return text, kb
 
 
-def select_attack(game: Game, latest_actions=None):
-    text = attack_text(game, latest_actions)
-
+def select_attack(game: Game):
     player = game.who_move_player()
     btns = []
     btn_row = []
+
     for spell in player.pokemon.spells:
         spell_icon = '🛡' if spell.is_defence else f'{spell.attack}⚔'
         btn_text = f'{spell.name} ({spell_icon}) [x{spell.count}]'
@@ -83,7 +82,7 @@ def select_attack(game: Game, latest_actions=None):
         ]
     ])
 
-    return text, kb
+    return kb
 
 
 def attack_text(game: Game, latest_actions):

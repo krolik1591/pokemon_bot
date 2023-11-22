@@ -83,8 +83,8 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
         return await call.answer('Not your turn!')
 
     if action == 'attack':
-        text, kb = select_attack(game)
-        return await call.message.edit_text(text, reply_markup=kb)
+        kb = select_attack(game)
+        return await call.message.edit_reply_markup(reply_markup=kb)
 
     if action == 'special_cards':
         pass
@@ -108,8 +108,8 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
 
     try:
         actions = game.cast_spell(spell_name)
-    except Exception:
-        return await call.answer('Cant cast it this round!')
+    except Exception as ex:
+        return await call.answer('Cant cast it this round! ' + str(ex))
 
     game.end_move()
     await game_service.save_game(game)
