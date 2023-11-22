@@ -50,7 +50,7 @@ class Game:
     def get_attack_defence(self):
         if self.who_move_index() == 1:
             return self.player1, self.player2
-        return
+        return self.player2, self.player1
 
     def is_player_move(self, player_id: int):
         who_must_move = self.player1.id if self.is_player1_move else self.player2.id
