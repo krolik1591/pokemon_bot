@@ -101,7 +101,6 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
 
     game.cast_spell(spell_name)
 
-
     game.end_move()
     await game_service.save_game(game)
 
