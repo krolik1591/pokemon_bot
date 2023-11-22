@@ -1,30 +1,40 @@
 from dataclasses import dataclass
+from typing import Optional
 
-from bot.dogemons import DOGEMONS, DOGEMONS_MAP
+from bot.dogemons import DOGEMONS_MAP
+from bot.models.pokemon_base import PokemonBase
 from bot.models.spell import Spell
 
 
 @dataclass
 class Pokemon:
-    name: str
-    base_attack: int
+    base_pokemon: PokemonBase
+    spells: [Spell]
     hp: int
-    max_hp: int
-    lvl: int
-    type: str
-    spells: Spell
+
+    @property
+    def name(self):
+        return self.base_pokemon.name
+
+    @property
+    def max_hp(self):
+        return self.base_pokemon.hp
+
+    @property
+    def lvl(self):
+        return self.base_pokemon.lvl
+
+    @property
+    def type(self):
+        return self.base_pokemon.type
 
     @classmethod
     def new(cls, pokemon_name):
         base_pokemon = DOGEMONS_MAP[pokemon_name]
         return cls(
-            name=base_pokemon["name"],
-            base_attack=base_pokemon["base_attack"],
-            max_hp=base_pokemon["hp"],
-            hp=base_pokemon["hp"],
-            lvl=base_pokemon["lvl"],
-            type=base_pokemon["type"],
-            spells=base_pokemon["spells"]
+            base_pokemon=base_pokemon,
+            hp=base_pokemon.hp,
+            spells=_spells_from_remaining_count(base_pokemon)
         )
 
     @classmethod
@@ -32,23 +42,27 @@ class Pokemon:
         if not mongo_data:
             return None
 
+        base_pokemon = DOGEMONS_MAP[mongo_data["name"]]
         return cls(
-            name=mongo_data["name"],
-            base_attack=mongo_data["base_attack"],
+            base_pokemon=base_pokemon,
             hp=mongo_data["hp"],
-            max_hp=mongo_data["max_hp"],
-            lvl=mongo_data["lvl"],
-            type=mongo_data["type"],
-            spells=mongo_data["spells"]
+            spells=_spells_from_remaining_count(base_pokemon, mongo_data["spells_remaining_count"])
         )
 
     def to_mongo(self):
         return {
             'name': self.name,
-            'base_attack': self.base_attack,
             'hp': self.hp,
-            'max_hp': self.max_hp,
-            'lvl': self.lvl,
-            'type': self.type,
-            'spells': self.spells
+            'spells_remaining_count': _spells_to_remaining_count(self.spells)
         }
+
+
+def _spells_from_remaining_count(base_pokemon: PokemonBase, remaining_count: [int] = None) -> [Spell]:
+    return [
+        spell.with_count(remaining_count[i] if remaining_count else None)
+        for i, spell in enumerate(base_pokemon.spells)
+    ]
+
+
+def _spells_to_remaining_count(spells: [Spell]) -> [int]:
+    return [i.count for i in spells]

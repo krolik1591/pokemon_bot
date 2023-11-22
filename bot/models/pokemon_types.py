@@ -2,19 +2,21 @@ from enum import Enum
 
 
 class Types(Enum):
+    NORMAL = 'normal'
     FIRE = 'fire'
     WATER = 'water'
-    EARTH = 'earth'
-    AIR = 'air'
-    ROCK = 'rock'
-    NORMAL = 'normal'
+    GRASS = 'grass'
+    ELECTRIC = 'electric'
+    ICE = 'ice'
+    FIGHTING = 'fighting'
 
 
 TYPE_STR = {
+    Types.NORMAL: '🌑',
     Types.FIRE: '🔥',
     Types.WATER: '💧',
-    Types.EARTH: '🌿',
-    Types.AIR: '💨',
-    Types.ROCK: '🗿',
-    Types.NORMAL: '🐱',
+    Types.GRASS: '🌿',
+    Types.ELECTRIC: '⚡️',
+    Types.ICE: '❄️',
+    Types.FIGHTING: '🥊',
 }

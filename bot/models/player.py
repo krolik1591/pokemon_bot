@@ -57,6 +57,6 @@ class Player:
 
 
 def get_pokemons_pool():
-    pokemons = [dogemon['name'] for dogemon in DOGEMONS]
+    pokemons = [dogemon.name for dogemon in DOGEMONS]
     random.shuffle(pokemons)
     return pokemons[:3]

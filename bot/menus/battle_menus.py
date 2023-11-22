@@ -1,14 +1,9 @@
-import random
-
 from aiogram import types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from bot.dogemons import DOGEMONS
 from bot.models.game import Game
 from bot.models.player import Player
-from bot.models.pokemon import Pokemon
 from bot.models.pokemon_types import TYPE_STR
-from utils.utils import get_username_or_link
 
 
 def waiting_battle_menu(user: types.User):
@@ -43,32 +38,46 @@ def choose_dogemon(game, first_move=False):
     return text, kb
 
 
-def choose_attack_menu(game):
+def battle_menu(game):
     text = attack_text(game)
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text='⚔️Basic Atc.', callback_data=f"fight|basic_atc|{game.game_id}"),
-            InlineKeyboardButton(text='☄️ Special Atc.', callback_data=f"fight|special_atc|{game.game_id}"),
+            InlineKeyboardButton(text='⚔ Attack', callback_data=f"fight_menu|attack|{game.game_id}"),
+            InlineKeyboardButton(text='☄️ Special Card.', callback_data=f"fight_menu|special_cards|{game.game_id}"),
         ],
         [
-            InlineKeyboardButton(text='👊 Power Atc.', callback_data=f"fight|power_atk|{game.game_id}"),
-            InlineKeyboardButton(text='🀄️ Special Card', callback_data=f"fight|flee|{game.game_id}"),
+            InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"fight_menu|timeout|{game.game_id}"),
+            InlineKeyboardButton(text='🏳️ Flee', callback_data=f"fight_menu|flee|{game.game_id}"),
         ],
     ])
 
     return text, kb
 
-#
-# def special_attack_menu(game):
-#     text = attack_text(game)
-#
-#     kb = InlineKeyboardMarkup(inline_keyboard=[
-#         [InlineKeyboardButton(text='☄️ Use Burn', callback_data="user_special_atc")],
-#         [InlineKeyboardButton(text='🔙 Back', callback_data=f"battle_dogeMON_{game.player1.pokemon.name}")],
-#     ])
-#
-#     return text, kb
+
+def select_attack(game: Game):
+    text = attack_text(game)
+
+    player = game.who_move_player()
+    btns = []
+    btn_row = []
+    for spell in player.pokemon.spells:
+        btn_row.append(
+            InlineKeyboardButton(text=f'{spell.name} ({spell.attack}⚔️)',
+                                 callback_data=f"fight|{spell.name}|{game.game_id}"),
+        )
+        if len(btn_row) == 2:
+            btns.append(btn_row)
+            btn_row = []
+
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        *btns,
+        [
+            InlineKeyboardButton(text='Back', callback_data=f"fight|flee|{game.game_id}"),
+        ]
+    ])
+
+    return text, kb
 
 
 def attack_text(game: Game):
@@ -93,7 +102,6 @@ def hp_bar(hp, max_hp):
 
     filled_symbols = round(TOTAL_SYMBOLS * hp / max_hp)
     empty_symbols = TOTAL_SYMBOLS - filled_symbols
-    bar =  FILLED * filled_symbols + EMPTY * empty_symbols
+    bar = FILLED * filled_symbols + EMPTY * empty_symbols
 
-    return f"HP: [{bar} {hp}] / {max_hp}"
-
+    return f"HP: [{bar}] {hp} / {max_hp}"

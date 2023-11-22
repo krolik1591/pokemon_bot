@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from bot.models.player import Player
+from bot.models.spell import Spell
 
 
 @dataclass
@@ -59,6 +60,23 @@ class Game:
 
     def who_move_player(self) -> Optional[Player]:
         return self.player1 if self.is_player1_move else self.player2
+
+    def cast_spell(self, spell_name: str):
+        attack, defence = self.get_attack_defence()
+        spell_info: Spell = next(spell for spell in attack.pokemon.spells if spell.name == spell_name)
+
+        if spell_info.count <= 0:
+            raise Exception("No more spells")
+
+        if spell_info.is_defence:
+            # todo player.set_defence()
+            pass
+        else:
+            # todo calc attack dmg
+            defence.pokemon.hp -= spell_info.attack
+
+        # todo spell.count -= 1
+
 
     def is_all_pokemons_selected(self) -> bool:
         return bool(self.player1.pokemon and self.player2.pokemon)

@@ -3,11 +3,9 @@ import random
 from aiogram import F, Router, types
 from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
-from aiogram.utils.deep_linking import create_start_link
 
-from bot.dogemons import DOGEMONS, DOGEMONS_MAP
 from bot.menus import battle
-from bot.menus.battle_menus import choose_attack_menu, choose_dogemon
+from bot.menus.battle_menus import battle_menu, choose_dogemon, select_attack
 from bot.models import game_service
 from bot.models.game import Game
 from bot.models.player import Player
@@ -63,12 +61,12 @@ async def player_choose_dogemon(call: types.CallbackQuery, state: FSMContext):
     # both players selected pokemon
     await game_service.save_game(game)  # save game without end move - the last player to pick a pokemon attacks first
 
-    text, kb = choose_attack_menu(game)
+    text, kb = battle_menu(game)
     await call.message.edit_text(text, reply_markup=kb)
 
 
-@router.callback_query(Text(startswith='fight|'))
-async def fight_attack(call: types.CallbackQuery, state: FSMContext):
+@router.callback_query(Text(startswith='fight_menu|'))
+async def fight_menu(call: types.CallbackQuery, state: FSMContext):
     _, action, game_id = call.data.split('|')
 
     game = await game_service.get_game(game_id)
@@ -76,10 +74,33 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     if not game.is_player_move(call.from_user.id):
         return await call.answer('Not your turn!')
 
-    if action == 'basic_atc':
-        game.base_atk()
-    elif action == 'power_atk':
-        game.power_atk()
+    if action == 'attack':
+        text, kb = select_attack(game)
+        return await call.message.edit_text(text, reply_markup=kb)
+
+    if action == 'special_cards':
+        pass
+
+    if action == 'timeout':
+        pass
+
+    if action == 'flee':
+        pass
+
+
+@router.callback_query(Text(startswith='fight|'))
+async def fight_attack(call: types.CallbackQuery, state: FSMContext):
+    _, spell_name, game_id = call.data.split('|')
+
+    game = await game_service.get_game(game_id)
+
+    if not game.is_player_move(call.from_user.id):
+        return await call.answer('Not your turn!')
+
+    player = game.who_move_player()
+
+    game.cast_spell(spell_name)
+
 
     game.end_move()
     await game_service.save_game(game)
@@ -100,7 +121,7 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
         return await call.message.edit_text(text, reply_markup=kb)
 
     # continue battle if pokemons are ok
-    text, kb = choose_attack_menu(game)
+    text, kb = battle_menu(game)
     await call.message.edit_text(text, reply_markup=kb)
 
 
