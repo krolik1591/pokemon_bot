@@ -25,8 +25,11 @@ class Player:
         self.pokemon = Pokemon.new(pokemon_name)
 
     def check_pokemons(self):
-        if self.pokemon and self.pokemon.hp <= 0:
-            self.pokemon = None
+        if not self.pokemon or self.pokemon.hp > 0:
+            return None
+        pokemon = self.pokemon
+        self.pokemon = None
+        return pokemon
 
     def is_lose(self):
         return len(self.pokemons_pool) == 0

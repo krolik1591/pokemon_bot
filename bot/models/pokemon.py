@@ -47,14 +47,16 @@ class Pokemon:
         return cls(
             base_pokemon=base_pokemon,
             hp=mongo_data["hp"],
-            spells=_spells_from_remaining_count(base_pokemon, mongo_data["spells_remaining_count"])
+            spells=_spells_from_remaining_count(base_pokemon, mongo_data["spells_remaining_count"]),
+            shield=mongo_data["shield"]
         )
 
     def to_mongo(self):
         return {
             'name': self.name,
             'hp': self.hp,
-            'spells_remaining_count': _spells_to_remaining_count(self.spells)
+            'spells_remaining_count': _spells_to_remaining_count(self.spells),
+            "shield": self.shield
         }
 
 

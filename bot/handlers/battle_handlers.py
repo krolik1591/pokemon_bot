@@ -1,3 +1,4 @@
+import asyncio
 import random
 
 from aiogram import F, Router, types
@@ -35,8 +36,13 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
     game = Game.new(players[0], players[1])
     game = await game_service.save_game(game)
 
+    await call.message.edit_text('Shuffling cards...')
+    await asyncio.sleep(1)
+    await call.message.edit_text('Game started!')
+    await asyncio.sleep(1)
+    await call.message.delete()
     text, kb = battle.choose_dogemon(game, first_move=True)
-    await call.message.edit_text(text, reply_markup=kb)
+    await call.message.answer(text, reply_markup=kb)
 
 
 @router.callback_query(Text(startswith='choose_dogemon|'))
@@ -101,7 +107,7 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
         return await call.answer('Not your turn!')
 
     try:
-        game.cast_spell(spell_name)
+        actions = game.cast_spell(spell_name)
     except Exception:
         return await call.answer('Cant cast it this round!')
 
@@ -120,11 +126,11 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
             # todo delete game?
             return
 
-        text, kb = choose_dogemon(game)
+        text, kb = choose_dogemon(game, latest_actions=actions)
         return await call.message.edit_text(text, reply_markup=kb)
 
     # continue battle if pokemons are ok
-    text, kb = battle_menu(game)
+    text, kb = battle_menu(game, latest_actions=actions)
     await call.message.edit_text(text, reply_markup=kb)
 
 

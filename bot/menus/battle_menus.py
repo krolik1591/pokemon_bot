@@ -15,13 +15,16 @@ def waiting_battle_menu(user: types.User):
     return text, kb
 
 
-def choose_dogemon(game, first_move=False):
+def choose_dogemon(game, first_move=False, latest_actions=None):
     player = game.who_move_player()
+    actions_text = _actions_text(latest_actions)
 
     if first_move:
         text = f'The first move is yours, {player.mention}, choose your dogeMON!'
     else:
         text = f'{player.mention} choose your dogeMON!'
+
+    text = f"{actions_text}\n{text}"
 
     doge_btns = []
 
@@ -33,13 +36,14 @@ def choose_dogemon(game, first_move=False):
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
         *doge_btns,
+        [InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"timeout|{game.game_id}")],
     ])
 
     return text, kb
 
 
-def battle_menu(game):
-    text = attack_text(game)
+def battle_menu(game, latest_actions=None):
+    text = attack_text(game, latest_actions)
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -47,24 +51,25 @@ def battle_menu(game):
             InlineKeyboardButton(text='☄️ Special Card.', callback_data=f"fight_menu|special_cards|{game.game_id}"),
         ],
         [
-            InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"timeout|{game.game_id}"),
             InlineKeyboardButton(text='🏳️ Flee', callback_data=f"fight_menu|flee|{game.game_id}"),
+            InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"timeout|{game.game_id}"),
         ],
     ])
 
     return text, kb
 
 
-def select_attack(game: Game):
-    text = attack_text(game)
+def select_attack(game: Game, latest_actions=None):
+    text = attack_text(game, latest_actions)
 
     player = game.who_move_player()
     btns = []
     btn_row = []
     for spell in player.pokemon.spells:
+        spell_icon = '🛡' if spell.is_defence else f'{spell.attack}⚔'
+        btn_text = f'{spell.name} ({spell_icon}) [x{spell.count}]'
         btn_row.append(
-            InlineKeyboardButton(text=f'{spell.name} ({spell.attack}⚔️)',
-                                 callback_data=f"fight|{spell.name}|{game.game_id}"),
+            InlineKeyboardButton(text=btn_text, callback_data=f"fight|{spell.name}|{game.game_id}"),
         )
         if len(btn_row) == 2:
             btns.append(btn_row)
@@ -73,28 +78,39 @@ def select_attack(game: Game):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         *btns,
         [
-            InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"timeout|{game.game_id}"),
             InlineKeyboardButton(text='🔙 Back', callback_data=f"choose_dogemon|{game.game_id}|"),
+            InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"timeout|{game.game_id}"),
         ]
     ])
 
     return text, kb
 
 
-def attack_text(game: Game):
+def attack_text(game: Game, latest_actions):
     dogemon_text = _pokemon_text(game.player1)
     enemy_dogemon_text = _pokemon_text(game.player2)
+    actions_text = _actions_text(latest_actions)
 
     player = game.who_move_player()
+
     return f"{player.mention}, it's your turn to attack!\n\n" \
            f"{dogemon_text}\n\n" \
-           f"{enemy_dogemon_text}"
+           f"{enemy_dogemon_text}\n\n" \
+           f"{actions_text}"
 
 
 def _pokemon_text(player: Player):
     pokemon = player.pokemon
+    shield_icon = "🛡" if pokemon.shield else ""
+
     return f"<b>Lvl. {pokemon.lvl} <i>{pokemon.name} {TYPE_STR[pokemon.type]} - {player.mention}</i></b>\n" \
-           f"{hp_bar(pokemon.hp, pokemon.max_hp)}\n"
+           f"{hp_bar(pokemon.hp, pokemon.max_hp)} {shield_icon}"
+
+
+def _actions_text(actions: [str]):
+    if actions is None:
+        return ""
+    return '\n'.join(actions)
 
 
 def hp_bar(hp, max_hp):
