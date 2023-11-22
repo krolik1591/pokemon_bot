@@ -1,4 +1,5 @@
 import random
+import time
 from dataclasses import dataclass
 from typing import Optional
 
@@ -15,6 +16,7 @@ class Player:
     id: int
     mention: str
     pokemons_pool: list[str]
+    last_move_time: float
     pokemon: Optional[Pokemon] = None
 
     def select_pokemon(self, pokemon_name: str):
@@ -35,7 +37,8 @@ class Player:
         return cls(
             id=user.id,
             mention=mention,
-            pokemons_pool=get_pokemons_pool()
+            pokemons_pool=get_pokemons_pool(),
+            last_move_time=time.time()
         )
 
     def to_mongo(self):
@@ -43,7 +46,8 @@ class Player:
             "id": self.id,
             "mention": self.mention,
             "pokemon": self.pokemon.to_mongo() if self.pokemon else None,
-            "pokemons_pool": self.pokemons_pool
+            "pokemons_pool": self.pokemons_pool,
+            "last_move_time": self.last_move_time
         }
 
     @classmethod
@@ -52,7 +56,8 @@ class Player:
             id=mongo_data["id"],
             mention=mongo_data["mention"],
             pokemon=Pokemon.from_mongo(mongo_data["pokemon"]),
-            pokemons_pool=mongo_data["pokemons_pool"]
+            pokemons_pool=mongo_data["pokemons_pool"],
+            last_move_time=mongo_data["last_move_time"]
         )
 
 

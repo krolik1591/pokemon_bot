@@ -1,7 +1,9 @@
 import random
+import time
 from dataclasses import dataclass
 from typing import Optional
 
+from bot.const import TIMEOUT
 from bot.models.player import Player
 from bot.models.pokemon_types import WEAKNESS
 from bot.models.spell import Spell
@@ -16,29 +18,24 @@ class Game:
 
     is_player1_move: bool = True
 
-    def base_atk(self):
-        who_attack, who_defence = self.get_attack_defence()
-        who_defence.pokemon.hp -= who_attack.pokemon.base_attack
-
-    def power_atk(self):
-        who_attack, who_defence = self.get_attack_defence()
-        who_defence.pokemon.hp -= who_attack.pokemon.base_attack + random.randint(3, 8)
-
-    def special_atk(self):
-        pass
-
-    def capture(self):
-        pass
-
-    def flee(self):
-        pass
+    def get_winner_if_time_out(self):
+        # return winner or None
+        attacker, defencer = self.get_attack_defence()
+        delta_time = time.time() - attacker.last_move_time
+        if delta_time > TIMEOUT:
+            return defencer
+        return None
 
     def select_pokemon(self, pokemon_name):
         self.who_move_player().select_pokemon(pokemon_name)
 
     def end_move(self):
         self.is_player1_move = not self.is_player1_move
+        self.update_last_move_time()  # start his move, reset move time
         self.who_move_player().check_pokemons()
+
+    def update_last_move_time(self):
+        self.who_move_player().last_move_time = time.time()
 
     def is_game_over(self):
         # return (winner, loser) or None
@@ -72,16 +69,25 @@ class Game:
         if spell_info.is_defence:
             attack.pokemon.shield = True
         else:
-            random_bonus = random.randint(3, 8)
-            additional_dmg = random_bonus if attack.pokemon.type in WEAKNESS[defence.pokemon.type] else -random_bonus
-            dmg = spell_info.attack + additional_dmg
+            # todo extract else body to separate func
+            if defence.pokemon.shield:
+                if random.randint(0, 1) == 0:
+                    return  # attack canceled by defence spell
 
-            defence.pokemon.hp -= dmg // 2 if defence.pokemon.shield else dmg
+            dmg = spell_info.attack
+
+            if attack.pokemon.type in WEAKNESS[defence.pokemon.type]:
+                dmg += random.randint(3, 8)
+            if defence.pokemon.type in WEAKNESS[attack.pokemon.type]:
+                dmg -= random.randint(3, 8)
+
+            defence.pokemon.hp -= dmg
 
         spell_info.count -= 1
 
     def is_all_pokemons_selected(self) -> bool:
         return bool(self.player1.pokemon and self.player2.pokemon)
+
 
     # serialization
 

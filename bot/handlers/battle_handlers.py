@@ -48,7 +48,9 @@ async def player_choose_dogemon(call: types.CallbackQuery, state: FSMContext):
     if not game.is_player_move(call.from_user.id):
         return await call.answer('You cannot select dogemon now!')
 
-    game.select_pokemon(pokemon)
+    # need to working `BACK` button
+    if pokemon:
+        game.select_pokemon(pokemon)
 
     if not game.is_all_pokemons_selected():
         game.end_move()  # end move ONLY if not all pokemons are selected
@@ -81,11 +83,12 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
     if action == 'special_cards':
         pass
 
-    if action == 'timeout':
-        pass
-
     if action == 'flee':
-        pass
+        _, winner = game.get_attack_defence()
+        text = f'{winner.mention} you are win!'
+        await call.message.edit_text(text)
+        # todo end game
+        return
 
 
 @router.callback_query(Text(startswith='fight|'))
@@ -125,4 +128,19 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_text(text, reply_markup=kb)
 
 
+@router.callback_query(Text(startswith='timeout|'))
+async def timeout(call: types.CallbackQuery, state: FSMContext):
+    _, game_id = call.data.split('|')
+    game = await game_service.get_game(game_id)
 
+    _, defender = game.get_attack_defence()
+    if call.from_user.id != defender.id:
+        return await call.answer('Only defender can use this btn')
+
+    winner = game.get_winner_if_time_out()
+    if winner:
+        text = f'{winner.mention} you are win, cause your opponent is timeout!'
+        await call.message.edit_text(text)
+        return
+
+    await call.answer()

@@ -47,7 +47,7 @@ def battle_menu(game):
             InlineKeyboardButton(text='☄️ Special Card.', callback_data=f"fight_menu|special_cards|{game.game_id}"),
         ],
         [
-            InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"fight_menu|timeout|{game.game_id}"),
+            InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"timeout|{game.game_id}"),
             InlineKeyboardButton(text='🏳️ Flee', callback_data=f"fight_menu|flee|{game.game_id}"),
         ],
     ])
@@ -73,7 +73,8 @@ def select_attack(game: Game):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         *btns,
         [
-            InlineKeyboardButton(text='Back', callback_data=f"fight|flee|{game.game_id}"),
+            InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"timeout|{game.game_id}"),
+            InlineKeyboardButton(text='🔙 Back', callback_data=f"choose_dogemon|{game.game_id}|"),
         ]
     ])
 
@@ -98,7 +99,7 @@ def _pokemon_text(player: Player):
 
 def hp_bar(hp, max_hp):
     TOTAL_SYMBOLS = 10
-    FILLED, EMPTY = "🟥", ".."
+    FILLED, EMPTY = "🟥", " .. "
 
     filled_symbols = round(TOTAL_SYMBOLS * hp / max_hp)
     empty_symbols = TOTAL_SYMBOLS - filled_symbols
