@@ -7,16 +7,8 @@ from bot.dogemons import DOGEMONS
 from bot.models.game import Game
 from bot.models.player import Player
 from bot.models.pokemon import Pokemon
+from bot.models.pokemon_types import TYPE_STR
 from utils.utils import get_username_or_link
-
-POKEMON_TYPE = {
-    'Fire': '🔥',
-    'Water': '💧',
-    'Grass': '🌱',
-    'Earth': '🌎',
-    'Air': '💨',
-    'Electric': '⚡️',
-}
 
 
 def waiting_battle_menu(user: types.User):
@@ -91,7 +83,7 @@ def attack_text(game: Game):
 
 def _pokemon_text(player: Player):
     pokemon = player.pokemon
-    return f"<b>Lvl. {pokemon.lvl} <i>{pokemon.name} {POKEMON_TYPE[pokemon.type]} - {player.mention}</i></b>\n" \
+    return f"<b>Lvl. {pokemon.lvl} <i>{pokemon.name} {TYPE_STR[pokemon.type]} - {player.mention}</i></b>\n" \
            f"{hp_bar(pokemon.hp, pokemon.max_hp)}\n"
 
 

@@ -105,16 +105,3 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
 
 
 
-@router.inline_query()
-async def inline_send_invite(query: types.InlineQuery, state):
-    # InlineKeyboardButton(text=_('REFERRALS_MENU_SEND_INVITE'), switch_inline_query=""),
-    await query.answer([types.InlineQueryResultArticle(
-        id=query.id,
-        title='hi',
-        description='im wonna kill you',
-        input_message_content=types.InputTextMessageContent(message_text='dont be a pusse'),
-        reply_markup=types.InlineKeyboardMarkup(inline_keyboard=[[types.InlineKeyboardButton(
-            text='im come destroy ur dogemon.',
-            url=await create_start_link(state.bot, str(query.from_user.id)))
-        ]]))
-    ], cache_time=0, is_personal=True)

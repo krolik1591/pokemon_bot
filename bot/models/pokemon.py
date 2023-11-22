@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from bot.dogemons import DOGEMONS, DOGEMONS_MAP
+from bot.models.spell import Spell
 
 
 @dataclass
@@ -11,6 +12,7 @@ class Pokemon:
     max_hp: int
     lvl: int
     type: str
+    spells: Spell
 
     @classmethod
     def new(cls, pokemon_name):
@@ -21,7 +23,8 @@ class Pokemon:
             max_hp=base_pokemon["hp"],
             hp=base_pokemon["hp"],
             lvl=base_pokemon["lvl"],
-            type=base_pokemon["type"]
+            type=base_pokemon["type"],
+            spells=base_pokemon["spells"]
         )
 
     @classmethod
@@ -35,7 +38,8 @@ class Pokemon:
             hp=mongo_data["hp"],
             max_hp=mongo_data["max_hp"],
             lvl=mongo_data["lvl"],
-            type=mongo_data["type"]
+            type=mongo_data["type"],
+            spells=mongo_data["spells"]
         )
 
     def to_mongo(self):
@@ -45,5 +49,6 @@ class Pokemon:
             'hp': self.hp,
             'max_hp': self.max_hp,
             'lvl': self.lvl,
-            'type': self.type
+            'type': self.type,
+            'spells': self.spells
         }
