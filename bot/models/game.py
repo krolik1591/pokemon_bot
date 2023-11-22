@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from bot.models.player import Player
+from bot.models.pokemon_types import WEAKNESS
 from bot.models.spell import Spell
 
 
@@ -42,9 +43,9 @@ class Game:
     def is_game_over(self):
         # return (winner, loser) or None
         if self.player1.is_lose():
-            return self.player2, self.player1
-        if self.player2.is_lose():
             return self.player1, self.player2
+        if self.player2.is_lose():
+            return self.player2, self.player1
 
     def get_attack_defence(self):
         if self.who_move_index() == 1:
@@ -69,14 +70,15 @@ class Game:
             raise Exception("No more spells")
 
         if spell_info.is_defence:
-            # todo player.set_defence()
-            pass
+            attack.pokemon.shield = True
         else:
-            # todo calc attack dmg
-            defence.pokemon.hp -= spell_info.attack
+            random_bonus = random.randint(3, 8)
+            additional_dmg = random_bonus if attack.pokemon.type in WEAKNESS[defence.pokemon.type] else -random_bonus
+            dmg = spell_info.attack + additional_dmg
 
-        # todo spell.count -= 1
+            defence.pokemon.hp -= dmg // 2 if defence.pokemon.shield else dmg
 
+        spell_info.count -= 1
 
     def is_all_pokemons_selected(self) -> bool:
         return bool(self.player1.pokemon and self.player2.pokemon)

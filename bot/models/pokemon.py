@@ -11,6 +11,7 @@ class Pokemon:
     base_pokemon: PokemonBase
     spells: [Spell]
     hp: int
+    shield: bool = False
 
     @property
     def name(self):

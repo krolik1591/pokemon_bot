@@ -97,9 +97,10 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     if not game.is_player_move(call.from_user.id):
         return await call.answer('Not your turn!')
 
-    player = game.who_move_player()
-
-    game.cast_spell(spell_name)
+    try:
+        game.cast_spell(spell_name)
+    except Exception:
+        return await call.answer('Cant cast it this round!')
 
     game.end_move()
     await game_service.save_game(game)
