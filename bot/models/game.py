@@ -13,11 +13,8 @@ from bot.models.spell import Spell
 class Game:
     player1: Player
     player2: Player
-
     game_id: Optional[str] = None
-
     is_player1_move: bool = True
-
 
     def select_pokemon(self, pokemon_name):
         self.who_move_player().select_pokemon(pokemon_name)
@@ -53,7 +50,7 @@ class Game:
         # attacker has 50% chance to miss when defender has shield
         if defence.pokemon.shield:
             defence.pokemon.shield = False
-            if random.randint(0, 1) == 0:
+            if random.choice((True, False)):
                 actions.append(f"{attack.mention} attack was canceled by defence spell. Protected {dmg} dmg")
                 return actions  # return coz attack was canceled
             else:
@@ -81,7 +78,6 @@ class Game:
             return self.player2, self.player1
         if self.player2.is_lose():
             return self.player1, self.player2
-
 
     def get_winner_if_time_out(self):
         # return winner or None
@@ -117,6 +113,7 @@ class Game:
         return cls(
             player1=player1,
             player2=player2,
+            is_player1_move=random.choice((True, False))
         )
 
     @classmethod

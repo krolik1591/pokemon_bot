@@ -6,7 +6,7 @@ from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
 
 from bot.menus import battle
-from bot.menus.battle_menus import battle_menu, choose_dogemon, select_attack
+from bot.menus.battle_menus import battle_menu, select_dogemon_menu, select_attack_menu
 from bot.models import game_service
 from bot.models.game import Game
 from bot.models.player import Player
@@ -15,7 +15,7 @@ router = Router()
 
 
 @router.message(F.chat.type != "private", Command("battle"))
-async def cmd_battle(message: types.Message, state: FSMContext):
+async def cmd_battle(message: types.Message):
     text, kb = battle.waiting_battle_menu(message.from_user)
     await message.answer(text, reply_markup=kb)
 
@@ -27,13 +27,10 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
     if call.from_user.id == player_1_id:
         return await call.answer('You cannot battle with yourself!')
 
-    players = [
+    game = Game.new(
         Player.new(await state.bot.get_chat(player_1_id)),
         Player.new(call.from_user)
-    ]
-    random.shuffle(players)
-
-    game = Game.new(players[0], players[1])
+    )
     game = await game_service.save_game(game)
 
     await call.message.edit_text('Shuffling cards...')
@@ -41,12 +38,12 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_text('Game started!')
     await asyncio.sleep(1)
     await call.message.delete()
-    text, kb = battle.choose_dogemon(game, first_move=True)
+    text, kb = battle.select_dogemon_menu(game, first_move=True)
     await call.message.answer(text, reply_markup=kb)
 
 
-@router.callback_query(Text(startswith='choose_dogemon|'))
-async def player_choose_dogemon(call: types.CallbackQuery, state: FSMContext):
+@router.callback_query(Text(startswith='select_dogemon|'))
+async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
     _, game_id, pokemon = call.data.split('|')
 
     game = await game_service.get_game(game_id)
@@ -63,7 +60,7 @@ async def player_choose_dogemon(call: types.CallbackQuery, state: FSMContext):
         await game_service.save_game(game)
 
         # show this menu again for another player
-        text, kb = battle.choose_dogemon(game)
+        text, kb = battle.select_dogemon_menu(game)
         return await call.message.edit_text(text, reply_markup=kb)
 
     # both players selected pokemon
@@ -83,7 +80,7 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
         return await call.answer('Not your turn!')
 
     if action == 'attack':
-        kb = select_attack(game)
+        kb = select_attack_menu(game)
         return await call.message.edit_reply_markup(reply_markup=kb)
 
     if action == 'special_cards':
@@ -126,7 +123,7 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
             # todo delete game?
             return
 
-        text, kb = choose_dogemon(game, latest_actions=actions)
+        text, kb = select_dogemon_menu(game, latest_actions=actions)
         return await call.message.edit_text(text, reply_markup=kb)
 
     # continue battle if pokemons are ok
