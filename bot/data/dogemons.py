@@ -20,7 +20,7 @@ DOGEMONS = [
         name='Malooy',
         hp=100,
         lvl=10,
-        type=PokemonType.GRASS,
+        type=PokemonType.WATER,
         spells=[
             Spell('Coding', 15, False, 100),
             Spell('BreakingBack', 100, False, 100),
@@ -32,7 +32,7 @@ DOGEMONS = [
         name='zaii',
         hp=200,
         lvl=13,
-        type=PokemonType.ROCK,
+        type=PokemonType.FIRE,
         spells=[
             Spell('Tackle', 15, False, 100),
             Spell('Blaze', 100, False, 100),
@@ -44,7 +44,7 @@ DOGEMONS = [
         name='Sneaky Peek',
         hp=120,
         lvl=20,
-        type=PokemonType.GRASS,
+        type=PokemonType.FIRE,
         spells=[
             Spell('Earthquake', 15, False, 100),
             Spell('SneakyPuf', 20, False, 100),

@@ -44,7 +44,7 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(Text(startswith='select_dogemon_menu|'))
 async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
-    _, game_id, pokemon = call.data.split('|')
+    _, pokemon, game_id = call.data.split('|')
 
     game = await game_service.get_game(game_id)
 
@@ -52,7 +52,7 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
         return await call.answer('You cannot select dogemon now!')
 
     # need to working `BACK` button
-    if pokemon:
+    if pokemon != 'None':
         game.select_pokemon(pokemon)
 
     if not game.is_all_pokemons_selected():
@@ -84,6 +84,8 @@ async def fight_menu(call: types.CallbackQuery):
         return await call.message.edit_reply_markup(reply_markup=kb)
 
     if action == 'special_cards':
+        if not game.get_attacker().special_card:
+            return await call.answer('You have no special cards!')
         kb = special_cards_menu(game)
         return await call.message.edit_reply_markup(reply_markup=kb)
 
@@ -146,7 +148,7 @@ async def fight_attack(call: types.CallbackQuery):
     pokemons_to_revive = game.get_attacker().get_pokemons_to_revive()
 
     if not pokemons_to_revive:
-        return await call.answer("idi nahuy nema kogo revive")
+        return await call.answer("All pokemons are alive!")
 
     text, kb = revive_pokemon_menu(game, pokemons_to_revive)
     await call.message.edit_text(text, reply_markup=kb)

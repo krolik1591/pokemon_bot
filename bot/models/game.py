@@ -3,7 +3,7 @@ import time
 from dataclasses import dataclass
 from typing import Optional
 
-from bot.data.const import TIMEOUT
+from bot.data import const
 from bot.models.player import Player
 from bot.models.pokemon_types import PokemonType, WEAKNESS
 from bot.models.spell import Spell
@@ -22,16 +22,30 @@ class Game:
     def use_special_card(self, pokemon_name=None):
         POKEMON_TYPES = [_type.value for _type in PokemonType.__members__.values()]
         card_name = self.get_attacker().special_card
-        if card_name == 'Revive':
-            return
-        elif card_name == 'Poison':
-            pass
-        elif card_name == 'Sleeping pills':
-            pass
+        attacker, defender = self.get_attacker_defencer()
+        action = []
+        if card_name == const.REVIVE:
+            self.get_attacker().pokemons_pool[pokemon_name] = True
+            self.get_attacker().set_revived_pokemon(pokemon_name)
+            action.append(f"{self.get_attacker().mention} revived {pokemon_name}")
+
+        elif card_name == const.POISON:
+            add_hp = self.use_poison(attacker)
+            action.append(f"{attacker.mention} use poison and restored {add_hp} hp")
+
+        elif card_name == const.SLEEPING_PILLS:
+            defender.set_sleeping_pills_counter()
+            action.append(f"{attacker.mention} use sleeping pills! {defender.mention} next {const.SLEEPING_COUNTER} attack will be cancelled")
+
         elif card_name in POKEMON_TYPES:
-            pass
+            attacker.increase_dmg_by_card = True
+            action.append(f"{attacker.mention} use Turbo-bonus card! Attack will be increased by {const.ADDITION_DMG_BY_CARD} until current pokemon is alive")
+
         else:
             raise Exception("Unknown special card")
+
+        self.get_attacker().special_card = None
+        return action
 
     # returns list of actions
     def cast_spell(self, spell_name: str) -> [str]:
@@ -49,13 +63,18 @@ class Game:
             actions.append(f"{attacker.mention} casted shield")
             return actions
 
+        if self.get_attacker().sleeping_pills_counter is not None:
+            self.get_attacker().decrease_sleeping_pills_counter()
+            actions.append(f"{attacker.mention} attack is cancelled by sleeping pills. {self.get_attacker().sleeping_pills_counter or 0} turns left")
+            return actions
+
         # calculate dmg based on spell and pokemons types
         dmg = _calc_dmg(spell, attacker, defencer)
 
         if defencer.pokemon.shield:
             is_attack_canceled = defencer.pokemon.attack_shield()
             if is_attack_canceled:
-                actions.append(f"{attacker.mention} attack was canceled by defence spell. Protected {dmg} dmg")
+                actions.append(f"{attacker.mention} attack was canceled by shield. Protected {dmg} dmg")
                 return actions
             actions.append(f"{defencer.mention} shield was broken")
 
@@ -84,7 +103,7 @@ class Game:
         # return winner or None
         attacker, defencer = self.get_attacker_defencer()
         delta_time = time.time() - attacker.last_move_time
-        if delta_time > TIMEOUT:
+        if delta_time > const.TIMEOUT:
             return defencer
         return None
 
@@ -105,6 +124,15 @@ class Game:
 
     def is_all_pokemons_selected(self) -> bool:
         return bool(self.player1.pokemon and self.player2.pokemon)
+
+    @staticmethod
+    def use_poison(attacker):
+        additional_hp = attacker.pokemon.max_hp * const.POISON_REGEN
+        new_hp = attacker.pokemon.hp + additional_hp
+        attacker.pokemon.hp += additional_hp
+        if new_hp > attacker.pokemon.max_hp:
+            attacker.pokemon.hp = attacker.pokemon.max_hp
+        return additional_hp
 
     @classmethod
     def new(cls, player1: Player, player2: Player):
@@ -134,8 +162,11 @@ class Game:
 def _calc_dmg(spell: Spell, attack: Player, defence: Player):
     dmg = spell.attack
 
+    if attack.pokemon.increase_dmg_by_card:
+        dmg += const.ADDITION_DMG_BY_CARD
+
     if attack.pokemon.type in WEAKNESS[defence.pokemon.type]:
-        dmg += random.randint(3, 8)
+        dmg += random.randint(*const.ADDITION_DMG_BY_POKEMON_TYPE)
     # if defence.pokemon.type in WEAKNESS[attack.pokemon.type]:
     #     dmg -= random.randint(3, 8)
 
