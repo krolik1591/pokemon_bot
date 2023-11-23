@@ -10,7 +10,7 @@ def hp_bar(hp, max_hp):
     filled_symbol = _get_symbol(hp_percent)
 
     bar = (filled_symbol * filled_symbols_count) + (EMPTY * empty_symbols_count)
-    return f"HP: [{bar}] {hp} / {max_hp}"
+    return f"HP: [{bar}] {int(hp)} / {max_hp}"
 
 
 def _get_symbol(hp_percent):

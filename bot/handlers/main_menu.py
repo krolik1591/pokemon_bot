@@ -23,3 +23,8 @@ async def edit_to_main_menu(callback: CallbackQuery):
     message = callback.message
     text, kb = main_menu(message.from_user)
     await message.edit_text(text, reply_markup=kb)
+
+
+@router.callback_query(Text('nothing'))
+async def nothing(call: CallbackQuery):
+    await call.answer()

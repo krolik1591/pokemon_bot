@@ -35,7 +35,7 @@ class Pokemon:
             raise Exception("Already have shield")
         self.shield = True
 
-    def attack_shield(self) -> str:
+    def attack_shield(self) -> bool:
         assert self.shield, "No shield"
         self.shield = False
         return random.choice((True, False))  # is attack cancelled

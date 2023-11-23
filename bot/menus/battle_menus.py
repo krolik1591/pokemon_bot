@@ -1,7 +1,11 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, User
 
 from bot.data.const import REVIVE
-from bot.models import Game, Player, TYPES_STR, Spell
+from bot.data.dogemons import DOGEMONS_MAP
+from bot.models.game import Game
+from bot.models.player import Player
+from bot.models.pokemon_types import TYPES_STR
+from bot.models.spell import Spell
 from bot.utils.hp_bar import hp_bar
 
 
@@ -16,15 +20,17 @@ def waiting_battle_menu(user: User):
 
 def select_dogemon_menu(game, first_move=False, latest_actions=None):
     def _pokemon_btn(pokemon_name):
-        return InlineKeyboardButton(text=pokemon_name,
-                                    callback_data=f"select_dogemon_menu|{pokemon_name}|{game.game_id}")
+        btn_text = _pokemon_text_small(DOGEMONS_MAP[pokemon_name])
+        return InlineKeyboardButton(text=btn_text, callback_data=f"select_dogemon_menu|{pokemon_name}|{game.game_id}")
 
-    player = game.get_attacker()
+    player, opponent = game.get_attacker_defencer()
+
     actions_text = _actions_text(latest_actions)
     select_pok_text = f'The first move is yours, {player.mention}, choose your dogeMON!' \
         if first_move else f'{player.mention} choose your dogeMON!'
+    opponents_pokemon = f"🔶{opponent.name} plays as: {_pokemon_text_small(opponent.pokemon)}\n" if opponent.pokemon else ""
 
-    text = f"{actions_text}\n\n{select_pok_text}"
+    text = f"{actions_text}\n\n{opponents_pokemon}\n{select_pok_text}"
 
     pokemons_btns = [_pokemon_btn(pokemon_name) for pokemon_name, is_alive in player.pokemons_pool.items() if is_alive]
     pokemons_btns = _columns(pokemons_btns, 1)  # 1 column
@@ -50,6 +56,9 @@ def battle_menu(game: Game, latest_actions=None):
            f"{actions_text}"
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text=f"Now attacks: {player.name}", callback_data="nothing"),
+        ],
         [
             InlineKeyboardButton(text='⚔ Attack', callback_data=f"fight_menu|attack|{game.game_id}"),
             InlineKeyboardButton(text='☄️ Special Card.', callback_data=f"fight_menu|special_cards|{game.game_id}"),
@@ -110,7 +119,8 @@ def revive_pokemon_menu(game: Game, pokemons_to_revive):
     text = 'Select pokemon to revive:'
 
     revive_btns = [
-        InlineKeyboardButton(text=pokemon_name, callback_data=f"fight|True|{pokemon_name}|{game.game_id}")
+        InlineKeyboardButton(text=_pokemon_text_small(DOGEMONS_MAP[pokemon_name]),
+                             callback_data=f"fight|True|{pokemon_name}|{game.game_id}")
         for pokemon_name in pokemons_to_revive
     ]
 
@@ -139,10 +149,14 @@ def _pokemon_text(player: Player):
            f"{hp_bar(pokemon.hp, pokemon.max_hp)} {power_increase_icon} {shield_icon} {sleeping_pills_icon}"
 
 
+def _pokemon_text_small(pokemon):
+    return f"Lvl {pokemon.lvl} {pokemon.name} {TYPES_STR[pokemon.type]}"
+
+
 def _actions_text(actions: [str]):
     if actions is None:
         return ""
-    return '\n'.join(actions)
+    return '\n'.join([f"🔹{a}" for a in actions])
 
 
 def _columns(arr, chunk_size):

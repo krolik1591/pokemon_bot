@@ -20,45 +20,48 @@ class Game:
         self.get_attacker().select_pokemon(pokemon_name)
 
     def use_special_card(self, pokemon_name=None):
-        POKEMON_TYPES = [_type.value for _type in PokemonType.__members__.values()]
-        card_name = self.get_attacker().special_card
         attacker, defender = self.get_attacker_defencer()
-        action = []
+        card_name = attacker.special_card
+
+        actions = []
+
         if card_name == const.REVIVE:
-            self.get_attacker().pokemons_pool[pokemon_name] = True
-            self.get_attacker().set_revived_pokemon(pokemon_name)
-            action.append(f"{self.get_attacker().mention} revived {pokemon_name}")
+            self.get_attacker().revive_pokemon(pokemon_name)
+            actions.append(f"{self.get_attacker().mention} revived {pokemon_name}")
 
         elif card_name == const.POISON:
-            add_hp = self.use_poison(attacker)
-            action.append(f"{attacker.mention} use poison and restored {add_hp} hp")
+            heal_amount = attacker.use_poison()
+            actions.append(f"{attacker.mention} use potion and restored {heal_amount} hp")
 
         elif card_name == const.SLEEPING_PILLS:
-            defender.set_sleeping_pills_counter()
-            action.append(f"{attacker.mention} use sleeping pills! {defender.mention} next {const.SLEEPING_COUNTER} attack will be cancelled")
+            defender.set_sleeping_pills()
+            actions.append(f"{attacker.mention} use sleeping pills! "
+                           f"{defender.mention} next {const.SLEEPING_COUNTER} attack(s) will be cancelled")
 
-        elif card_name in POKEMON_TYPES:
-            if attacker.pokemon.type == card_name:
+        elif card_name in [i.value for i in PokemonType]:
+            if attacker.pokemon.type.value == card_name:
                 attacker.pokemon.increase_dmg_by_card = True
-                action.append(f"{attacker.mention} use turbo {card_name} card! Attack will be increased by {const.ADDITION_DMG_BY_CARD} until current pokemon is alive")
+                actions.append(f"{attacker.mention} use turbo {card_name} card! "
+                               f"Attack dmg will be increased by {const.ADDITION_DMG_BY_CARD} until pokemon is alive")
             else:
-                action.append(f"{attacker.mention} use turbo {card_name} card! But his pokemon is {attacker.pokemon.type} type. So nothing happens")
+                actions.append(f"{attacker.mention} use turbo {card_name} card! "
+                               f"But his pokemon is {attacker.pokemon.type.value} type. So nothing happens")
 
         else:
             raise Exception("Unknown special card")
 
         self.get_attacker().special_card = None
-        return action
+        return actions
 
     # returns list of actions
     def cast_spell(self, spell_name: str) -> [str]:
         attacker, defencer = self.get_attacker_defencer()
         spell = attacker.pokemon.get_spell_by_name(spell_name)
 
+        actions = []
+
         # "use" spell. crash if no spells left
         spell.decrease_count()
-
-        actions = []
 
         # just set shield if spell is defence
         if spell.is_defence:
@@ -66,14 +69,16 @@ class Game:
             actions.append(f"{attacker.mention} casted shield")
             return actions
 
-        if self.get_attacker().sleeping_pills_counter is not None:
-            self.get_attacker().decrease_sleeping_pills_counter()
-            actions.append(f"{attacker.mention} attack is cancelled by sleeping pills. {self.get_attacker().sleeping_pills_counter or 0} turns left")
+        # if has sleeping pills effect - cancel attack
+        if attacker.sleeping_pills_counter is not None:
+            attacker.decrease_sleeping_pills()
+            actions.append(f"{attacker.mention} attack is cancelled by sleeping pills. {attacker.sleeping_pills_counter or 0} turns left")
             return actions
 
         # calculate dmg based on spell and pokemons types
         dmg = _calc_dmg(spell, attacker, defencer)
 
+        # check if defencer has shield and try to attack
         if defencer.pokemon.shield:
             is_attack_canceled = defencer.pokemon.attack_shield()
             if is_attack_canceled:
@@ -81,6 +86,7 @@ class Game:
                 return actions
             actions.append(f"{defencer.mention} shield was broken")
 
+        # do dmg and check if pokemon dead after it
         is_pokemon_dead = defencer.attack_pokemon(dmg)
         actions.append(f"{attacker.mention} dealt {dmg} dmg by {spell.name}")
         if is_pokemon_dead:
@@ -127,15 +133,6 @@ class Game:
 
     def is_all_pokemons_selected(self) -> bool:
         return bool(self.player1.pokemon and self.player2.pokemon)
-
-    @staticmethod
-    def use_poison(attacker):
-        additional_hp = attacker.pokemon.max_hp * const.POISON_REGEN
-        new_hp = attacker.pokemon.hp + additional_hp
-        attacker.pokemon.hp += additional_hp
-        if new_hp > attacker.pokemon.max_hp:
-            attacker.pokemon.hp = attacker.pokemon.max_hp
-        return additional_hp
 
     @classmethod
     def new(cls, player1: Player, player2: Player):

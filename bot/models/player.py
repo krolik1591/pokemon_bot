@@ -7,6 +7,7 @@ from aiogram.types import Chat, User
 from aiogram.utils import markdown
 from aiogram.utils.link import create_tg_link
 
+from bot.data import const
 from bot.data.const import REVIVE_HP, SLEEPING_COUNTER
 from bot.data.dogemons import DOGEMONS
 from bot.data.special_cards import SPECIAL_CARDS
@@ -17,7 +18,7 @@ from bot.models.pokemon import Pokemon
 @dataclass
 class Player:
     id: int  # telegram user id
-    mention: str  # user mention
+    name: str  # user first name
 
     pokemons_pool: dict  # pokemon_name => is_alive; pool of pokemons that can be selected
     last_move_time: float  # unix time of last meaningful move (successful attack)
@@ -30,7 +31,9 @@ class Player:
     def select_pokemon(self, pokemon_name: str):
         assert self.pokemon is None, "pokemon already selected"
         self.pokemon = Pokemon.new(pokemon_name)
-        if self.revived_pokemon is not None and self.revived_pokemon == pokemon_name:
+
+        # revived pokemon will have 30% more hp
+        if self.revived_pokemon == pokemon_name:
             self.pokemon.hp = self.pokemon.max_hp * REVIVE_HP
 
     def attack_pokemon(self, dmg):
@@ -38,21 +41,20 @@ class Player:
         if self.pokemon.hp > 0:
             return None
 
-        if self.pokemon.increase_dmg_by_card:
-            self.pokemon.increase_dmg_by_card = False   # deactivate special card bonus
-
+        # pokemon dead
         pokemon = self.pokemon
         self.pokemons_pool[pokemon.name] = False  # mark pokemon as dead
         self.pokemon = None
         return pokemon
 
-    def set_revived_pokemon(self, pokemon_name):
+    def revive_pokemon(self, pokemon_name):
+        self.pokemons_pool[pokemon_name] = True
         self.revived_pokemon = pokemon_name
 
-    def set_sleeping_pills_counter(self):
+    def set_sleeping_pills(self):
         self.sleeping_pills_counter = SLEEPING_COUNTER
 
-    def decrease_sleeping_pills_counter(self):
+    def decrease_sleeping_pills(self):
         self.sleeping_pills_counter -= 1
         if self.sleeping_pills_counter == 0:
             self.sleeping_pills_counter = None
@@ -63,12 +65,15 @@ class Player:
     def is_lose(self):
         return not any(is_alive for is_alive in self.pokemons_pool.values() if is_alive is True)
 
+    @property
+    def mention(self):
+        return markdown.hlink(self.name, create_tg_link("user", id=self.id))
+
     @classmethod
     def new(cls, user: Chat | User):
-        mention = markdown.hlink(user.first_name, create_tg_link("user", id=user.id))
         return cls(
             id=user.id,
-            mention=mention,
+            name=user.first_name,
             pokemons_pool=get_pokemons_pool(),
             last_move_time=time.time(),
             special_card=get_special_card(),
@@ -79,7 +84,7 @@ class Player:
     def to_mongo(self):
         return {
             "id": self.id,
-            "mention": self.mention,
+            "name": self.name,
             "pokemon": self.pokemon.to_mongo() if self.pokemon else None,
             "pokemons_pool": self.pokemons_pool,
             "last_move_time": self.last_move_time,
@@ -92,7 +97,7 @@ class Player:
     def from_mongo(cls, mongo_data):
         return cls(
             id=mongo_data["id"],
-            mention=mongo_data["mention"],
+            name=mongo_data["name"],
             pokemon=Pokemon.from_mongo(mongo_data["pokemon"]),
             pokemons_pool=mongo_data["pokemons_pool"],
             last_move_time=mongo_data["last_move_time"],
@@ -100,6 +105,14 @@ class Player:
             sleeping_pills_counter=mongo_data["sleeping_pills_counter"],
             revived_pokemon=mongo_data["revived_pokemon"],
         )
+
+    def use_poison(self):
+        heal_amount = self.pokemon.max_hp * const.POTION_REGEN
+        new_hp = self.pokemon.hp + heal_amount
+        self.pokemon.hp += heal_amount
+        if new_hp > self.pokemon.max_hp:
+            self.pokemon.hp = self.pokemon.max_hp
+        return heal_amount
 
 
 def get_pokemons_pool():
@@ -112,3 +125,4 @@ def get_special_card():
     special_cards = SPECIAL_CARDS
     random.shuffle(special_cards)
     return PokemonType.FIRE.value
+    return special_cards[0]
