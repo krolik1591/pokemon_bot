@@ -1,4 +1,7 @@
-from bot.models import PokemonBase, PokemonType, Spell
+from bot.models.pokemon_base import PokemonBase
+from bot.models.pokemon_types import PokemonType
+from bot.models.spell import Spell
+
 
 DOGEMONS = [
     PokemonBase(

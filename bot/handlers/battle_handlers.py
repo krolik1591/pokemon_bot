@@ -41,7 +41,7 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
     await call.message.answer(text, reply_markup=kb)
 
 
-@router.callback_query(Text(startswith='select_dogemon|'))
+@router.callback_query(Text(startswith='select_dogemon_menu|'))
 async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
     _, game_id, pokemon = call.data.split('|')
 

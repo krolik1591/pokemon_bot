@@ -55,7 +55,7 @@ def battle_menu(game: Game, latest_actions=None):
         ],
         [
             InlineKeyboardButton(text='🏳️ Flee', callback_data=f"fight_menu|flee|{game.game_id}"),
-            _timeout_btn(game.game_id),
+            *_timeout_btn(game.game_id),
         ],
     ])
 
@@ -77,7 +77,7 @@ def select_attack_menu(game: Game):
         *spell_btns,
         [
             InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon|{game.game_id}|"),
-            _timeout_btn(game.game_id),
+            *_timeout_btn(game.game_id),
         ]
     ])
 

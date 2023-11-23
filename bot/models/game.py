@@ -4,7 +4,9 @@ from dataclasses import dataclass
 from typing import Optional
 
 from bot.data.const import TIMEOUT
-from bot.models import Player, WEAKNESS, Spell
+from bot.models.player import Player
+from bot.models.pokemon_types import WEAKNESS
+from bot.models.spell import Spell
 
 
 @dataclass
@@ -39,9 +41,9 @@ class Game:
         if defencer.pokemon.shield:
             is_attack_canceled = defencer.pokemon.attack_shield()
             if is_attack_canceled:
-                actions.append(f"{attacker.mention} attack was canceled by defence spell")
+                actions.append(f"{attacker.mention} attack was canceled by defence spell. Protected {dmg} dmg")
                 return actions
-            actions.append(f"{attacker.mention} shield was broken")
+            actions.append(f"{defencer.mention} shield was broken")
 
         is_pokemon_dead = defencer.attack_pokemon(dmg)
         actions.append(f"{attacker.mention} dealt {dmg} dmg by {spell.name}")
