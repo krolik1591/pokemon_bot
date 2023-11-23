@@ -5,7 +5,8 @@ from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
 
 from bot.menus import battle
-from bot.menus.battle_menus import battle_menu, select_dogemon_menu, select_attack_menu
+from bot.menus.battle_menus import battle_menu, revive_pokemon_menu, select_dogemon_menu, select_attack_menu, \
+    special_cards_menu
 from bot.utils import game_service
 from bot.models.game import Game
 from bot.models.player import Player
@@ -83,7 +84,8 @@ async def fight_menu(call: types.CallbackQuery):
         return await call.message.edit_reply_markup(reply_markup=kb)
 
     if action == 'special_cards':
-        pass
+        kb = special_cards_menu(game)
+        return await call.message.edit_reply_markup(reply_markup=kb)
 
     # todo move flee to separate handler to allow both players to flee
 
@@ -97,7 +99,7 @@ async def fight_menu(call: types.CallbackQuery):
 
 @router.callback_query(Text(startswith='fight|'))
 async def fight_attack(call: types.CallbackQuery):
-    _, spell_name, game_id = call.data.split('|')
+    _, is_special, item_name, game_id = call.data.split('|')
 
     game = await game_service.get_game(game_id)
 
@@ -105,11 +107,15 @@ async def fight_attack(call: types.CallbackQuery):
         return await call.answer('Not your turn!')
 
     try:
-        actions = game.cast_spell(spell_name)
+        if is_special == "True":
+            actions = game.use_special_card(item_name)
+        else:
+            actions = game.cast_spell(item_name)
+            game.end_move()
+
     except Exception as ex:
         return await call.answer('Cant cast it this round! ' + str(ex))
 
-    game.end_move()
     await game_service.save_game(game)
 
     # check next player pokemons
@@ -129,6 +135,20 @@ async def fight_attack(call: types.CallbackQuery):
 
     # continue battle if pokemons are ok
     text, kb = battle_menu(game, latest_actions=actions)
+    await call.message.edit_text(text, reply_markup=kb)
+
+
+@router.callback_query(Text(startswith='revive_pokemon|'))
+async def fight_attack(call: types.CallbackQuery):
+    _, game_id = call.data.split('|')
+    game = await game_service.get_game(game_id)
+
+    pokemons_to_revive = game.get_attacker().get_pokemons_to_revive()
+
+    if not pokemons_to_revive:
+        return await call.answer("idi nahuy nema kogo revive")
+
+    text, kb = revive_pokemon_menu(game, pokemons_to_revive)
     await call.message.edit_text(text, reply_markup=kb)
 
 

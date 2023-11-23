@@ -1,17 +1,4 @@
-from bot.models import PokemonType, TYPES_STR
+from bot.models.pokemon_types import PokemonType
 
-SPECIAL_CARDS = [
-    {
-        "name": "Revive",
-    },
-    {
-        "name": "Poison",
-    },
-    {
-        "name": "Sleeping pills",
-    },
-    {
-        "name": f'{PokemonType.FIRE.value} turbo',
-    }
-]
+SPECIAL_CARDS = ["Revive", "Poison", "Sleeping pills", f'{PokemonType.FIRE.value}']
 

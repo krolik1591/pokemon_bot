@@ -30,7 +30,7 @@ def select_dogemon_menu(game, first_move=False, latest_actions=None):
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
         *pokemons_btns,
-        _timeout_btn(game.game_id),
+        [_timeout_btn(game.game_id)],
     ])
 
     return text, kb
@@ -55,7 +55,7 @@ def battle_menu(game: Game, latest_actions=None):
         ],
         [
             InlineKeyboardButton(text='🏳️ Flee', callback_data=f"fight_menu|flee|{game.game_id}"),
-            *_timeout_btn(game.game_id),
+            _timeout_btn(game.game_id),
         ],
     ])
 
@@ -66,7 +66,7 @@ def select_attack_menu(game: Game):
     def _spell_btn(spell: Spell):
         spell_icon = '🛡' if spell.is_defence else f'{spell.attack}⚔'
         btn_text = f'{spell.name} ({spell_icon}) [x{spell.count}]'
-        return InlineKeyboardButton(text=btn_text, callback_data=f"fight|{spell.name}|{game.game_id}")
+        return InlineKeyboardButton(text=btn_text, callback_data=f"fight|{False}|{spell.name}|{game.game_id}")
 
     spells = game.get_attacker().pokemon.spells
 
@@ -76,16 +76,51 @@ def select_attack_menu(game: Game):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         *spell_btns,
         [
-            InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon|{game.game_id}|"),
-            *_timeout_btn(game.game_id),
+            InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon_menu|{None}|{game.game_id}|"),
+            _timeout_btn(game.game_id),
         ]
     ])
 
     return kb
 
 
+def special_cards_menu(game: Game):
+    player = game.get_attacker()
+
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text=f'{player.special_card}', callback_data=f"revive_pokemon|{game.game_id}"),
+        ],
+        [
+            InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon_menu|{game.game_id}|"),
+            _timeout_btn(game.game_id),
+        ],
+    ])
+
+    return kb
+
+
+def revive_pokemon_menu(game: Game, pokemons_to_revive):
+    text = 'Select pokemon to revive:'
+
+    revive_btns = [
+        InlineKeyboardButton(text=pokemon.name, callback_data=f"fight|{True}|{pokemon.name}|{game.game_id}")
+        for pokemon in pokemons_to_revive
+    ]
+
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        *revive_btns,
+        [
+            InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon_menu|{game.game_id}|"),
+            _timeout_btn(game.game_id),
+        ],
+    ])
+
+    return text, kb
+
+
 def _timeout_btn(game_id):
-    return InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"timeout|{game_id}"),
+    return InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"timeout|{game_id}")
 
 
 def _pokemon_text(player: Player):

@@ -5,7 +5,7 @@ from typing import Optional
 
 from bot.data.const import TIMEOUT
 from bot.models.player import Player
-from bot.models.pokemon_types import WEAKNESS
+from bot.models.pokemon_types import PokemonType, WEAKNESS
 from bot.models.spell import Spell
 
 
@@ -18,6 +18,20 @@ class Game:
 
     def select_pokemon(self, pokemon_name):
         self.get_attacker().select_pokemon(pokemon_name)
+
+    def use_special_card(self, pokemon_name=None):
+        POKEMON_TYPES = [_type.value for _type in PokemonType.__members__.values()]
+        card_name = self.get_attacker().special_card
+        if card_name == 'Revive':
+            return
+        elif card_name == 'Poison':
+            pass
+        elif card_name == 'Sleeping pills':
+            pass
+        elif card_name in POKEMON_TYPES:
+            pass
+        else:
+            raise Exception("Unknown special card")
 
     # returns list of actions
     def cast_spell(self, spell_name: str) -> [str]:
@@ -122,7 +136,7 @@ def _calc_dmg(spell: Spell, attack: Player, defence: Player):
 
     if attack.pokemon.type in WEAKNESS[defence.pokemon.type]:
         dmg += random.randint(3, 8)
-    if defence.pokemon.type in WEAKNESS[attack.pokemon.type]:
-        dmg -= random.randint(3, 8)
+    # if defence.pokemon.type in WEAKNESS[attack.pokemon.type]:
+    #     dmg -= random.randint(3, 8)
 
     return dmg
