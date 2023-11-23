@@ -16,13 +16,13 @@ class Player:
     id: int  # telegram user id
     mention: str  # user mention
 
-    pokemons_pool: list[str]  # names of pokemons that can be selected
+    pokemons_pool: dict  # names of pokemons that can be selected
     last_move_time: float  # unix time of last meaningful move (successful attack)
     pokemon: Optional[Pokemon] = None   # active pokemon
 
     def select_pokemon(self, pokemon_name: str):
         assert self.pokemon is None, "pokemon already selected"
-        self.pokemons_pool.remove(pokemon_name)
+        self.pokemons_pool[pokemon_name] = False  # mark pokemon as dead
         self.pokemon = Pokemon.new(pokemon_name)
 
     def attack_pokemon(self, dmg):
@@ -34,7 +34,7 @@ class Player:
         return pokemon
 
     def is_lose(self):
-        return len(self.pokemons_pool) == 0
+        return not any(pokemon for pokemon in self.pokemons_pool.values() if pokemon is True)
 
     @classmethod
     def new(cls, user: Chat | User):
@@ -69,4 +69,4 @@ class Player:
 def get_pokemons_pool():
     pokemons = [dogemon.name for dogemon in DOGEMONS]
     random.shuffle(pokemons)
-    return pokemons[:3]
+    return {dogemon: True for dogemon in pokemons[:3]}  # 3 random pokemons, True means that pokemon is alive

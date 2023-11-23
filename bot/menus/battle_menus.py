@@ -25,7 +25,7 @@ def select_dogemon_menu(game, first_move=False, latest_actions=None):
 
     text = f"{actions_text}\n\n{select_pok_text}"
 
-    pokemons_btns = [_pokemon_btn(pokemon_name) for pokemon_name in player.pokemons_pool]
+    pokemons_btns = [_pokemon_btn(pokemon_name) for pokemon_name, is_alive in player.pokemons_pool.items() if is_alive]
     pokemons_btns = _columns(pokemons_btns, 1)  # 1 column
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
