@@ -38,8 +38,11 @@ class Game:
             action.append(f"{attacker.mention} use sleeping pills! {defender.mention} next {const.SLEEPING_COUNTER} attack will be cancelled")
 
         elif card_name in POKEMON_TYPES:
-            attacker.increase_dmg_by_card = True
-            action.append(f"{attacker.mention} use Turbo-bonus card! Attack will be increased by {const.ADDITION_DMG_BY_CARD} until current pokemon is alive")
+            if attacker.pokemon.type == card_name:
+                attacker.pokemon.increase_dmg_by_card = True
+                action.append(f"{attacker.mention} use turbo {card_name} card! Attack will be increased by {const.ADDITION_DMG_BY_CARD} until current pokemon is alive")
+            else:
+                action.append(f"{attacker.mention} use turbo {card_name} card! But his pokemon is {attacker.pokemon.type} type. So nothing happens")
 
         else:
             raise Exception("Unknown special card")
