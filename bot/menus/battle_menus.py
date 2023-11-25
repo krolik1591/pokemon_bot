@@ -81,7 +81,7 @@ def select_attack_menu(game: Game):
     spells = game.get_attacker().pokemon.spells
 
     spell_btns = [_spell_btn(spell) for spell in spells]
-    spell_btns = _columns(spell_btns, 2)  # two columns
+    spell_btns = _columns(spell_btns, 1)  # two columns
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
         *spell_btns,
