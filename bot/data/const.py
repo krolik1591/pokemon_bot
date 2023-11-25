@@ -1,4 +1,4 @@
-TIMEOUT = 3 * 60  # seconds
+TIMEOUT = 2 * 60  # seconds
 
 SLEEPING_COUNTER = 3  # how many moves pokemon will sleep
 POTION_REGEN = 0.5   # MAX_HP * POTION_REGEN

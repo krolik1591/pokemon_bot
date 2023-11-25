@@ -124,5 +124,4 @@ def get_pokemons_pool():
 def get_special_card():
     special_cards = SPECIAL_CARDS
     random.shuffle(special_cards)
-    return PokemonType.FIRE.value
     return special_cards[0]
