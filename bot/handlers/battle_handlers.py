@@ -24,6 +24,7 @@ async def cmd_battle(message: types.Message, state: FSMContext):
     await message.answer_photo(
         photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
         caption=text,
+        reply_markup=kb
     )
 
     # await message.answer(text, reply_markup=kb)
@@ -42,18 +43,19 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
     )
     game = await game_service.save_game(game)
 
-    await call.message.edit_text('Shuffling cards...')
+    await call.message.edit_caption(caption='Shuffling cards...')
     await asyncio.sleep(1)
-    await call.message.edit_text('Game started!')
+    await call.message.edit_caption(caption='Game started!')
     await asyncio.sleep(1)
     await call.message.delete()
 
     text, kb = battle.select_dogemon_menu(game, first_move=True)
-    image_bytes = get_image_bytes('image1.jpg')
+    image_bytes = get_image_bytes('image2.jpg')
 
     await call.message.answer_photo(
         photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
         caption=text,
+        reply_markup=kb
     )
 
 
@@ -76,13 +78,13 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
 
         # show this menu again for another player
         text, kb = battle.select_dogemon_menu(game)
-        return await call.message.edit_text(text, reply_markup=kb)
+        return await call.message.edit_caption(caption=text, reply_markup=kb)
 
     # both players selected pokemon
     await game_service.save_game(game)  # save game without end move - the last player to pick a pokemon attacks first
 
     text, kb = battle_menu(game)
-    await call.message.edit_text(text, reply_markup=kb)
+    await call.message.edit_caption(caption=text, reply_markup=kb)
 
 
 @router.callback_query(Text(startswith='fight_menu|'))
@@ -109,7 +111,7 @@ async def fight_menu(call: types.CallbackQuery):
     if action == 'flee':
         _, winner = game.get_attacker_defencer()
         text = f'{winner.mention} you are win!'
-        await call.message.edit_text(text)
+        await call.message.edit_caption(caption=text)
         # todo end game
         return
 
@@ -142,17 +144,17 @@ async def fight_attack(call: types.CallbackQuery):
         if is_game_over:
             winner, loser = is_game_over
             text = f'{winner.mention} you are win!'
-            await call.message.edit_text(text)
+            await call.message.edit_caption(caption=text)
             # todo send money?
             # todo delete game?
             return
 
         text, kb = select_dogemon_menu(game, latest_actions=actions)
-        return await call.message.edit_text(text, reply_markup=kb)
+        return await call.message.edit_caption(caption=text, reply_markup=kb)
 
     # continue battle if pokemons are ok
     text, kb = battle_menu(game, latest_actions=actions)
-    await call.message.edit_text(text, reply_markup=kb)
+    await call.message.edit_caption(caption=text, reply_markup=kb)
 
 
 @router.callback_query(Text(startswith='revive_pokemon|'))
@@ -166,7 +168,7 @@ async def fight_attack(call: types.CallbackQuery):
         return await call.answer("All pokemons are alive!")
 
     text, kb = revive_pokemon_menu(game, pokemons_to_revive)
-    await call.message.edit_text(text, reply_markup=kb)
+    await call.message.edit_caption(caption=text, reply_markup=kb)
 
 
 @router.callback_query(Text(startswith='timeout|'))
@@ -181,7 +183,7 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
     winner = game.is_game_over_coz_timeout()
     if winner:
         text = f'{winner.mention} you are win, cause your opponent is timeout!'
-        await call.message.edit_text(text)
+        await call.message.edit_caption(caption=text)
         return
 
     await call.answer()
