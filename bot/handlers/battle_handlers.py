@@ -19,16 +19,9 @@ router = Router()
 @router.message(F.chat.type != "private", Command("battle"))
 async def cmd_battle(message: types.Message, state: FSMContext):
     text, kb = battle.waiting_battle_menu(message.from_user)
-
-    path = Path(__file__).parent.parent / 'data' / 'images' / 'image1.jpg'
-
-    photo_path = os.path.join(path)
-
-    with open(photo_path, "rb") as photo_file:
-        image_bytes = photo_file.read()
+    image_bytes = get_image_bytes('image1.jpg')
 
     await message.answer_photo(
-        chat_id=message.chat.id,
         photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
         caption=text,
     )
@@ -54,8 +47,14 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_text('Game started!')
     await asyncio.sleep(1)
     await call.message.delete()
+
     text, kb = battle.select_dogemon_menu(game, first_move=True)
-    await call.message.answer(text, reply_markup=kb)
+    image_bytes = get_image_bytes('image1.jpg')
+
+    await call.message.answer_photo(
+        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
+        caption=text,
+    )
 
 
 @router.callback_query(Text(startswith='select_dogemon_menu|'))
@@ -186,3 +185,11 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
         return
 
     await call.answer()
+
+
+def get_image_bytes(name):
+    path = Path(__file__).parent.parent / 'data' / 'images' / name
+    photo_path = os.path.join(path)
+
+    with open(photo_path, "rb") as photo_file:
+        return photo_file.read()
