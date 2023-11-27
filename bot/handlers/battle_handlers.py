@@ -1,4 +1,6 @@
 import asyncio
+import os
+from pathlib import Path
 
 from aiogram import F, Router, types
 from aiogram.filters import Command, Text
@@ -15,9 +17,23 @@ router = Router()
 
 
 @router.message(F.chat.type != "private", Command("battle"))
-async def cmd_battle(message: types.Message):
+async def cmd_battle(message: types.Message, state: FSMContext):
     text, kb = battle.waiting_battle_menu(message.from_user)
-    await message.answer(text, reply_markup=kb)
+
+    path = Path(__file__).parent.parent / 'data' / 'images' / 'image1.jpg'
+
+    photo_path = os.path.join(path)
+
+    with open(photo_path, "rb") as photo_file:
+        image_bytes = photo_file.read()
+
+    await message.answer_photo(
+        chat_id=message.chat.id,
+        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
+        caption=text,
+    )
+
+    # await message.answer(text, reply_markup=kb)
 
 
 @router.callback_query(Text(startswith='join_battle_'))
