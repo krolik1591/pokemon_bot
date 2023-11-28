@@ -5,7 +5,8 @@ from bot.db.db import mongodb
 
 # USERS
 
-
+# after adapting to your code, it (USERS methods) can be removed
+# other_handlers.py too
 async def create_new_user(user_id):
     await mongodb['users'].insert_one({
         'user_id': user_id,
@@ -16,13 +17,6 @@ async def create_new_user(user_id):
 async def is_user_exist(user_id):
     user = await mongodb['users'].find_one({'user_id': user_id})
     return bool(user)
-
-
-# POKEMONS
-
-
-async def create_new_pokemon(pokemon_info):
-    await mongodb['pokemons'].insert_one(pokemon_info)
 
 
 # GAME

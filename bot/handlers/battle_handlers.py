@@ -19,7 +19,11 @@ router = Router()
 
 
 @router.message(F.chat.type != "private", Command("battle_fun"))
-async def cmd_battle(message: types.Message, state: FSMContext):
+async def fun_battle(message: types.Message):
+    err = await pre_game_check(message.from_user.id, None, is_fun_battle=True)
+    if err:
+        return await message.answer(err)
+
     text, kb = battle.waiting_battle_menu(message.from_user, None)
     image_bytes = get_image_bytes('image1.jpg')
 
@@ -63,7 +67,7 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
         return await call.answer('You cannot battle with yourself!')
 
     try:
-        bet = int(bet)      # bet == None if battle without bet
+        bet = int(bet)      # bet == 'None' if battle without bet
         err = await pre_game_check(call.from_user.id, bet)
         if err:
             return await call.answer(err)
@@ -118,6 +122,8 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
         return await call.message.edit_caption(caption=text, reply_markup=kb)
 
     # both players selected pokemon
+    if pokemon != 'None':
+        game.end_move()
     await game_service.save_game(game)  # save game without end move - the last player to pick a pokemon attacks first
 
     text, kb = battle_menu(game)
