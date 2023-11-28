@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from bot.data import const
+from bot.data.special_cards import SPECIAL_CARDS
 from bot.models.player import Player
 from bot.models.pokemon_types import PokemonType, WEAKNESS
 from bot.models.spell import Spell
@@ -28,6 +29,7 @@ class Game:
         card_name = attacker.special_card
 
         actions = []
+        x = [card for card in SPECIAL_CARDS if card.endswith("-turbo")]
 
         if card_name == const.REVIVE:
             self.get_attacker().revive_pokemon(pokemon_name)
@@ -42,7 +44,7 @@ class Game:
             actions.append(f"{attacker.mention} use sleeping pills! "
                            f"{defender.mention} next {const.SLEEPING_COUNTER} attack(s) will be cancelled")
 
-        elif card_name in [i.value for i in PokemonType]:
+        elif card_name in [card for card in SPECIAL_CARDS if card.endswith("-turbo")]:
             if attacker.pokemon.type.value == card_name:
                 attacker.pokemon.increase_dmg_by_card = True
                 actions.append(f"{attacker.mention} use turbo {card_name} card! "
