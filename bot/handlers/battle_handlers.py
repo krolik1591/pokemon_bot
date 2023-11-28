@@ -6,7 +6,7 @@ from aiogram import F, Router, exceptions, types
 from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
 
-from bot.handlers.REWORK_IT import check_user_balances
+from bot.handlers.REWORK_IT import pre_game_check, take_money_from_players
 from bot.menus import battle
 from bot.menus.battle_menus import battle_menu, revive_pokemon_menu, select_dogemon_menu, select_attack_menu, \
     special_cards_menu
@@ -38,6 +38,10 @@ async def money_battle(message: types.Message, state: FSMContext):
     except ValueError:
         return await message.answer('Bet must be integer and bigger than 0!')
 
+    err = await pre_game_check(message.from_user.id, int(bet))
+    if err:
+        return await message.answer(err)
+
     text, kb = battle.waiting_battle_menu(message.from_user, bet)
     image_bytes = get_image_bytes('image1.jpg')
 
@@ -52,18 +56,25 @@ async def money_battle(message: types.Message, state: FSMContext):
 async def join_battle(call: types.CallbackQuery, state: FSMContext):
     _, player_1_id, bet = call.data.split('|')
 
-    player1 = await state.bot.get_chat(player_1_id)
-    err = await check_user_balances(player1, call.from_user, int(bet))
-    if err:
-        return await call.answer('\n'.join(err))
-
     if call.from_user.id == player_1_id:
         return await call.answer('You cannot battle with yourself!')
 
+    try:
+        bet = int(bet)      # bet == None if battle without bet
+        err = await pre_game_check(call.from_user.id, bet)
+        if err:
+            return await call.answer(err)
+        await take_money_from_players(player_1_id, call.from_user.id, int(bet))
+
+    except ValueError:
+        bet = None
+
     game = Game.new(
-        Player.new(player1),
-        Player.new(call.from_user)
+        Player.new(await state.bot.get_chat(player_1_id)),
+        Player.new(call.from_user),
+        bet=bet,
     )
+
     game = await game_service.save_game(game)
 
     await call.message.edit_caption(caption='Shuffling cards...')

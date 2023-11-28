@@ -1,14 +1,18 @@
 from bot.db import methods as db
 
 
-async def check_user_balances(user1, user2, bet):
-    user1_balance = await db.get_user_balance(user1.id)
-    user2_balance = await db.get_user_balance(user2.id)
+async def pre_game_check(player_id, bet):
+    active_game = await db.get_active_game(player_id)
+    if active_game:
+        return f'You are already in game!'
 
-    text = []
+    user1_balance = await db.get_user_balance(player_id)
     if user1_balance < bet:
-        text.append(f'{user1.get_mention()} have no money to bet!')
-    if user2_balance < bet:
-        text.append(f'{user2.get_mention()} have no money to bet!')
+        return f'You have no money to bet!'
 
-    return text
+    return None
+
+
+async def take_money_from_players(player1_id, player2_id, bet):
+    await db.update_user_balance(player1_id, -bet)
+    await db.update_user_balance(player2_id, -bet)

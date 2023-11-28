@@ -13,9 +13,12 @@ from bot.models.spell import Spell
 class Game:
     player1: Player
     player2: Player
+    bet: int
     game_id: Optional[str] = None
     is_player1_move: bool = True
-    is_finished: bool = False
+
+    creation_time: float = time.time()
+    winner: int = None
 
     def select_pokemon(self, pokemon_name):
         self.get_attacker().select_pokemon(pokemon_name)
@@ -136,12 +139,14 @@ class Game:
         return bool(self.player1.pokemon and self.player2.pokemon)
 
     @classmethod
-    def new(cls, player1: Player, player2: Player):
+    def new(cls, player1: Player, player2: Player, bet: Optional[int]):
         return cls(
             player1=player1,
             player2=player2,
+            bet=bet,
             is_player1_move=random.choice((True, False)),
-            is_finished=False
+            winner=None,
+            creation_time=time.time()
         )
 
     @classmethod
@@ -151,7 +156,9 @@ class Game:
             player1=Player.from_mongo(mongo_data['player1']),
             player2=Player.from_mongo(mongo_data['player2']),
             is_player1_move=mongo_data['is_player1_move'],
-            is_finished=mongo_data['is_finished']
+            winner=mongo_data['winner'],
+            creation_time=mongo_data['creation_time'],
+            bet=mongo_data['bet']
         )
 
     def to_mongo(self):
@@ -159,7 +166,9 @@ class Game:
             "player1": self.player1.to_mongo(),
             "player2": self.player2.to_mongo(),
             "is_player1_move": self.is_player1_move,
-            "is_finished": self.is_finished
+            "winner": self.winner,
+            "creation_time": self.creation_time,
+            "bet": self.bet
         }
 
 

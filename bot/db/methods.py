@@ -2,6 +2,7 @@ from bson import ObjectId
 
 from bot.db.db import mongodb
 
+
 # USERS
 
 
@@ -57,9 +58,39 @@ async def get_user_balance(user_id):
     return user['balance']
 
 
+async def get_active_game(user_id):
+    game = await mongodb['games'].find_one({
+        '$or': [
+            {'player1.id': user_id},
+            {'player2.id': user_id}
+        ],
+        'winner': None
+    },
+        sort=[('creation_time', -1)])
+    return game
+
+
+async def update_user_balance(user_id, balance_to_add):
+    await mongodb['users'].update_one(
+        {
+            'user_id': user_id
+        },
+        {
+            '$inc': {
+                'balance': balance_to_add
+            }
+        }
+    )
+
+
 if __name__ == '__main__':
     import asyncio
+
+
     async def main():
-        x = await create_new_game({'1': 1, '2': 2})
+        # x = await get_active_game(357108179)
+        x = await get_active_game(1)
         print(x)
+
+
     asyncio.run(main())

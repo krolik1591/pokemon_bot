@@ -6,4 +6,4 @@ mongodb = AsyncIOMotorClient(config.mongo_connection_string)["PokemonBot"]
 
 
 if __name__ == '__main__':
-    pass
+    print(int('None'))
