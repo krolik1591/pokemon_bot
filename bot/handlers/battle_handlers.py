@@ -6,7 +6,8 @@ from aiogram import F, Router, exceptions, types
 from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
 
-from bot.handlers.REWORK_IT import pre_game_check, take_money_from_players
+from bot.db import db
+from bot.handlers.REWORK_IT import pre_game_check, end_game, take_money_from_players
 from bot.menus import battle
 from bot.menus.battle_menus import battle_menu, revive_pokemon_menu, select_dogemon_menu, select_attack_menu, \
     special_cards_menu
@@ -55,6 +56,8 @@ async def money_battle(message: types.Message, state: FSMContext):
 @router.callback_query(Text(startswith='join_battle'))
 async def join_battle(call: types.CallbackQuery, state: FSMContext):
     _, player_1_id, bet = call.data.split('|')
+
+    player_1_id = int(player_1_id)
 
     if call.from_user.id == player_1_id:
         return await call.answer('You cannot battle with yourself!')
@@ -140,26 +143,15 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
         kb = special_cards_menu(game)
         return await call.message.edit_reply_markup(reply_markup=kb)
 
-    # todo move flee to separate handler to allow both players to flee
-
     if action == 'flee':
         defencer, winner = game.get_attacker_defencer()
         text = f'{winner.mention} you are win!'
         await call.message.edit_caption(caption=text)
+        await end_game(winner.id, game)
 
         # if bot is admin
         await kick_user(state, call.message.chat.id, defencer)
         return
-
-
-async def kick_user(state, chat_id, looser):
-    try:
-        await state.bot.ban_chat_member(chat_id, looser.id)
-        await state.bot.unban_chat_member(chat_id, looser.id)
-
-        await state.bot.send_message(chat_id, f'User {looser.mention} loosed and was kicked!')
-    except exceptions.TelegramBadRequest:
-        print('Im not a admin!')
 
 
 @router.callback_query(Text(startswith='fight|'))
@@ -191,8 +183,8 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
             winner, loser = is_game_over
             text = f'{winner.mention} you are win!'
             await call.message.edit_caption(caption=text)
-            # todo send money?
-            # todo delete game?
+            await end_game(winner.id, game)
+
             # if bot is admin
             await kick_user(state, call.message.chat.id, loser)
             return
@@ -232,12 +224,23 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
     if winner:
         text = f'{winner.mention} you are win, cause your opponent is timeout!'
         await call.message.edit_caption(caption=text)
+        await end_game(winner.id, game)
 
         # if bot is admin
         await kick_user(state, call.message.chat.id, looser)
         return
 
     await call.answer()
+
+
+async def kick_user(state, chat_id, looser):
+    try:
+        await state.bot.ban_chat_member(chat_id, looser.id)
+        await state.bot.unban_chat_member(chat_id, looser.id)
+
+        await state.bot.send_message(chat_id, f'User {looser.mention} loosed and was kicked!')
+    except exceptions.TelegramBadRequest:
+        print('Im not a admin!')
 
 
 def get_image_bytes(name):

@@ -18,7 +18,7 @@ class Game:
     is_player1_move: bool = True
 
     creation_time: float = time.time()
-    winner: int = None
+    winner: Optional[int] = None
 
     def select_pokemon(self, pokemon_name):
         self.get_attacker().select_pokemon(pokemon_name)
