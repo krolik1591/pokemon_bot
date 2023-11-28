@@ -124,5 +124,4 @@ def get_pokemons_pool():
 def get_special_card():
     special_cards = SPECIAL_CARDS
     random.shuffle(special_cards)
-    print(special_cards)
     return special_cards[0]
