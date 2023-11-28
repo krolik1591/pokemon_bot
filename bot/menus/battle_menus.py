@@ -9,10 +9,14 @@ from bot.models.spell import Spell
 from bot.utils.hp_bar import hp_bar
 
 
-def waiting_battle_menu(user: User):
+def waiting_battle_menu(user: User, bet):
     text = f'{user.mention_html()} waiting for an opponent...'
+    if bet:
+        text += f'\n\nBet: {bet}'
+    else:
+        text += '\n\nNo bet'
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text='Join', callback_data=f"join_battle_{user.id}")],
+        [InlineKeyboardButton(text='Join', callback_data=f"join_battle|{user.id}|{bet}")],
     ])
 
     return text, kb

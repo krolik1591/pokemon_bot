@@ -33,7 +33,7 @@ async def set_bot_commands(bot: Bot):
     ], scope=types.BotCommandScopeAllPrivateChats())
 
     await bot.set_my_commands(commands=[
-        types.BotCommand(command="battle", description="Start battle"),
+        types.BotCommand(command="battle_fun", description="Start battle"),
     ], scope=types.BotCommandScopeAllGroupChats())
 
 

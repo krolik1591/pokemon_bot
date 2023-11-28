@@ -15,6 +15,7 @@ class Game:
     player2: Player
     game_id: Optional[str] = None
     is_player1_move: bool = True
+    is_finished: bool = False
 
     def select_pokemon(self, pokemon_name):
         self.get_attacker().select_pokemon(pokemon_name)
@@ -113,7 +114,7 @@ class Game:
         attacker, defencer = self.get_attacker_defencer()
         delta_time = time.time() - attacker.last_move_time
         if delta_time > const.TIMEOUT:
-            return defencer
+            return defencer, attacker
         return None
 
     def get_attacker_defencer(self):
@@ -139,7 +140,8 @@ class Game:
         return cls(
             player1=player1,
             player2=player2,
-            is_player1_move=random.choice((True, False))
+            is_player1_move=random.choice((True, False)),
+            is_finished=False
         )
 
     @classmethod
@@ -148,14 +150,16 @@ class Game:
             game_id=mongo_data['_id'],
             player1=Player.from_mongo(mongo_data['player1']),
             player2=Player.from_mongo(mongo_data['player2']),
-            is_player1_move=mongo_data['is_player1_move']
+            is_player1_move=mongo_data['is_player1_move'],
+            is_finished=mongo_data['is_finished']
         )
 
     def to_mongo(self):
         return {
             "player1": self.player1.to_mongo(),
             "player2": self.player2.to_mongo(),
-            "is_player1_move": self.is_player1_move
+            "is_player1_move": self.is_player1_move,
+            "is_finished": self.is_finished
         }
 
 

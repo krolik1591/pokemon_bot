@@ -8,6 +8,7 @@ from bot.db.db import mongodb
 async def create_new_user(user_id):
     await mongodb['users'].insert_one({
         'user_id': user_id,
+        'balance': 100,
     })
 
 
@@ -47,6 +48,13 @@ async def update_game(game_id, game_info):
             '$set': game_info
         }
     )
+
+
+# REWORK IT
+
+async def get_user_balance(user_id):
+    user = await mongodb['users'].find_one({'user_id': user_id})
+    return user['balance']
 
 
 if __name__ == '__main__':

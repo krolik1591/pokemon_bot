@@ -9,10 +9,9 @@ async def mongo_first_start():
 
     print('First start, creating collections...')
 
-    collection_names = ['users', 'pokemons', 'gamelogs']
+    collection_names = ['users', 'games']
 
     for collection_name in collection_names:
         await mongodb.create_collection(collection_name)
 
     mongodb['users'].create_index('user_id', unique=True)
-    mongodb['pokemons'].create_index('name', unique=True)

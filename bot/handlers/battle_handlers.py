@@ -2,10 +2,11 @@ import asyncio
 import os
 from pathlib import Path
 
-from aiogram import F, Router, types
+from aiogram import F, Router, exceptions, types
 from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
 
+from bot.handlers.REWORK_IT import check_user_balances
 from bot.menus import battle
 from bot.menus.battle_menus import battle_menu, revive_pokemon_menu, select_dogemon_menu, select_attack_menu, \
     special_cards_menu
@@ -16,9 +17,9 @@ from bot.models.player import Player
 router = Router()
 
 
-@router.message(F.chat.type != "private", Command("battle"))
+@router.message(F.chat.type != "private", Command("battle_fun"))
 async def cmd_battle(message: types.Message, state: FSMContext):
-    text, kb = battle.waiting_battle_menu(message.from_user)
+    text, kb = battle.waiting_battle_menu(message.from_user, None)
     image_bytes = get_image_bytes('image1.jpg')
 
     await message.answer_photo(
@@ -27,18 +28,40 @@ async def cmd_battle(message: types.Message, state: FSMContext):
         reply_markup=kb
     )
 
-    # await message.answer(text, reply_markup=kb)
+
+@router.message(F.chat.type != "private", Text(startswith="/battle "))
+async def money_battle(message: types.Message, state: FSMContext):
+    try:
+        bet = int(message.text.removeprefix('/battle '))
+        if bet <= 0:
+            raise ValueError
+    except ValueError:
+        return await message.answer('Bet must be integer and bigger than 0!')
+
+    text, kb = battle.waiting_battle_menu(message.from_user, bet)
+    image_bytes = get_image_bytes('image1.jpg')
+
+    await message.answer_photo(
+        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
+        caption=text,
+        reply_markup=kb
+    )
 
 
-@router.callback_query(Text(startswith='join_battle_'))
+@router.callback_query(Text(startswith='join_battle'))
 async def join_battle(call: types.CallbackQuery, state: FSMContext):
-    player_1_id = int(call.data.removeprefix('join_battle_'))
+    _, player_1_id, bet = call.data.split('|')
+
+    player1 = await state.bot.get_chat(player_1_id)
+    err = await check_user_balances(player1, call.from_user, int(bet))
+    if err:
+        return await call.answer('\n'.join(err))
 
     if call.from_user.id == player_1_id:
         return await call.answer('You cannot battle with yourself!')
 
     game = Game.new(
-        Player.new(await state.bot.get_chat(player_1_id)),
+        Player.new(player1),
         Player.new(call.from_user)
     )
     game = await game_service.save_game(game)
@@ -88,7 +111,7 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(Text(startswith='fight_menu|'))
-async def fight_menu(call: types.CallbackQuery):
+async def fight_menu(call: types.CallbackQuery, state: FSMContext):
     _, action, game_id = call.data.split('|')
 
     game = await game_service.get_game(game_id)
@@ -109,15 +132,27 @@ async def fight_menu(call: types.CallbackQuery):
     # todo move flee to separate handler to allow both players to flee
 
     if action == 'flee':
-        _, winner = game.get_attacker_defencer()
+        defencer, winner = game.get_attacker_defencer()
         text = f'{winner.mention} you are win!'
         await call.message.edit_caption(caption=text)
-        # todo end game
+
+        # if bot is admin
+        await kick_user(state, call.message.chat.id, defencer)
         return
 
 
+async def kick_user(state, chat_id, looser):
+    try:
+        await state.bot.ban_chat_member(chat_id, looser.id)
+        await state.bot.unban_chat_member(chat_id, looser.id)
+
+        await state.bot.send_message(chat_id, f'User {looser.mention} loosed and was kicked!')
+    except exceptions.TelegramBadRequest:
+        print('Im not a admin!')
+
+
 @router.callback_query(Text(startswith='fight|'))
-async def fight_attack(call: types.CallbackQuery):
+async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     _, is_special, item_name, game_id = call.data.split('|')
 
     game = await game_service.get_game(game_id)
@@ -147,6 +182,8 @@ async def fight_attack(call: types.CallbackQuery):
             await call.message.edit_caption(caption=text)
             # todo send money?
             # todo delete game?
+            # if bot is admin
+            await kick_user(state, call.message.chat.id, loser)
             return
 
         text, kb = select_dogemon_menu(game, latest_actions=actions)
@@ -180,10 +217,13 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
     if call.from_user.id != defender.id:
         return await call.answer('Only defender can use this btn')
 
-    winner = game.is_game_over_coz_timeout()
+    winner, looser = game.is_game_over_coz_timeout()
     if winner:
         text = f'{winner.mention} you are win, cause your opponent is timeout!'
         await call.message.edit_caption(caption=text)
+
+        # if bot is admin
+        await kick_user(state, call.message.chat.id, looser)
         return
 
     await call.answer()
