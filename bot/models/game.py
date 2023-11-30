@@ -44,8 +44,9 @@ class Game:
             actions.append(f"{attacker.mention} use sleeping pills! "
                            f"{defender.mention} next {const.SLEEPING_COUNTER} attack(s) will be cancelled")
 
-        elif card_name in [card for card in SPECIAL_CARDS if card.endswith("-turbo")]:
-            if attacker.pokemon.type.value == card_name:
+        elif card_name.endswith("-turbo"):
+            turbo_type = card_name[2:].removesuffix("-turbo")
+            if attacker.pokemon.type.value == turbo_type:
                 attacker.pokemon.increase_dmg_by_card = True
                 actions.append(f"{attacker.mention} use turbo {card_name} card! "
                                f"Attack dmg will be increased by {const.ADDITION_DMG_BY_CARD} until pokemon is alive")
