@@ -20,7 +20,7 @@ router = Router()
 
 @router.message(F.chat.type != "private", Command("battle_fun"))
 async def fun_battle(message: types.Message):
-    err = await pre_game_check(message.from_user.id, None, is_fun_battle=True)
+    err = await pre_game_check(message.from_user.id, None, without_bets=True)
     if err:
         return await message.answer(err)
 

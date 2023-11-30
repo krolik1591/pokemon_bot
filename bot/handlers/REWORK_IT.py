@@ -2,12 +2,12 @@ from bot.db import methods as db
 from bot.models.game import Game
 
 
-async def pre_game_check(player_id, bet, is_fun_battle=False):
+async def pre_game_check(player_id, bet, without_bets=False):
     active_game = await db.get_active_game(player_id)
     if active_game:
         return f'You are already in game!'
 
-    if is_fun_battle:
+    if without_bets:
         return None
 
     user1_balance = await db.get_user_balance(player_id)
