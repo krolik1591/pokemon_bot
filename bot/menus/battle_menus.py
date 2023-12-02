@@ -68,8 +68,8 @@ def battle_menu(game: Game, latest_actions=None):
             InlineKeyboardButton(text='☄️ Special Card.', callback_data=f"fight_menu|special_cards|{game.game_id}"),
         ],
         [
-            InlineKeyboardButton(text='🏳️ Flee', callback_data=f"fight_menu|flee|{game.game_id}"),
             _timeout_btn(game.game_id),
+            InlineKeyboardButton(text='🏳️ Flee', callback_data=f"fight_menu|flee|{game.game_id}"),
         ],
     ])
 
