@@ -151,7 +151,9 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
 
     if action == 'flee':
         defencer, winner = game.get_attacker_defencer()
-        text = f'{winner.mention} you are win!'
+        db_game = await db.get_active_game(winner.id)
+        reward = db_game['bet'] * 2 if db_game['bet'] else 0
+        text = f'{winner.mention} won {reward} {winner.pokemon.name} while {defencer.mention} fled the battle'
         await call.message.edit_caption(caption=text)
         await end_game(winner.id, game)
 
@@ -187,7 +189,9 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
         is_game_over = game.is_game_over()
         if is_game_over:
             winner, loser = is_game_over
-            text = f'{winner.mention} you are win!'
+            db_game = await db.get_active_game(winner.id)
+            reward = db_game['bet'] * 2 if db_game['bet'] else 0
+            text = f'{winner.mention} you are win {reward}'
             await call.message.edit_caption(caption=text)
             await end_game(winner.id, game)
 
@@ -228,7 +232,9 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
 
     winner, looser = game.is_game_over_coz_timeout()
     if winner:
-        text = f'{winner.mention} you are win, cause your opponent is timeout!'
+        db_game = await db.get_active_game(winner.id)
+        reward = db_game['bet'] * 2 if db_game['bet'] else 0
+        text = f'{winner.mention} won {reward} {winner.pokemon.name} while {looser.mention} was inactive'
         await call.message.edit_caption(caption=text)
         await end_game(winner.id, game)
 
