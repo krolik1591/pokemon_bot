@@ -11,10 +11,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.BASIC,
         spells=[
-            Spell('Tight Slam', 9, False, 5),
-            Spell('Punch', 6, False, 50),
+            Spell('Tight Slam', 13, False, 5),
+            Spell('Punch', 11, False, 50),
             Spell('Rest', 0, True, 5),
-            Spell('Heavt Imapct', 15, False, 1),
+            Spell('Heavt Imapct', 18, False, 1),
         ]
     ),
     PokemonBase(
@@ -23,10 +23,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.BASIC,
         spells=[
-            Spell('Wings cut', 9, False, 5),
+            Spell('Wings cut', 15, False, 5),
             Spell('WindSpin', 0, True, 3),
-            Spell('Tackle', 6, False, 50),
-            Spell('Gust', 18, False, 2),
+            Spell('Tackle', 11, False, 50),
+            Spell('Gust', 23, False, 2),
         ]
     ),
     PokemonBase(
@@ -35,10 +35,10 @@ DOGEMONS = [
         lvl=2,
         type=PokemonType.BASIC,
         spells=[
-            Spell('Tackle', 6, False, 50),
-            Spell('Gust', 18, False, 3),
-            Spell('Peck', 8, False, 3),
-            Spell('Wing hit', 8, False, 5),
+            Spell('Tackle', 11, False, 50),
+            Spell('Gust', 23, False, 3),
+            Spell('Peck', 15, False, 3),
+            Spell('Wing hit', 13, False, 5),
         ]
     ),
     PokemonBase(
@@ -47,9 +47,9 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.BASIC,
         spells=[
-            Spell('Scratch', 5, False, 50),
-            Spell('Quick hit', 9, False, 3),
-            Spell('Tackle', 8, False, 3),
+            Spell('Scratch', 11, False, 50),
+            Spell('Quick hit', 15, False, 3),
+            Spell('Tackle', 13, False, 3),
             Spell('Focus', 0, True, 3),
         ]
     ),
@@ -59,10 +59,10 @@ DOGEMONS = [
         lvl=2,
         type=PokemonType.BASIC,
         spells=[
-            Spell('Scratch', 6, False, 50),
-            Spell('Poison Bite', 15, False, 1),
-            Spell('Tail Hit', 10, False, 3),
-            Spell('Tailwhip', 9, False, 3),
+            Spell('Scratch', 12, False, 50),
+            Spell('Poison Bite', 20, False, 1),
+            Spell('Tail Hit', 15, False, 3),
+            Spell('Tailwhip', 13, False, 3),
         ]
     ),
     PokemonBase(
@@ -71,9 +71,9 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.BASIC,
         spells=[
-            Spell('Rollout', 10, False, 3),
-            Spell('Pound', 10, False, 3),
-            Spell('Slap', 5, False, 50),
+            Spell('Rollout', 15, False, 3),
+            Spell('Pound', 15, False, 3),
+            Spell('Slap', 9, False, 50),
             Spell('Sing', 0, True, 5),
         ]
     ),
@@ -83,9 +83,9 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.BASIC,
         spells=[
-            Spell('Scratch', 5, False, 50),
-            Spell('Scream Out', 10, False, 3),
-            Spell('Cat kick', 10, False, 3),
+            Spell('Scratch', 10, False, 50),
+            Spell('Scream Out', 15, False, 3),
+            Spell('Cat kick', 15, False, 3),
             Spell('Confuse', 0, True, 3),
         ]
     ),
@@ -95,10 +95,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.BASIC,
         spells=[
-            Spell('Combat hit', 13, False, 3),
-            Spell('Horn fury', 9, False, 2),
-            Spell('TakeDown', 5, False, 50),
-            Spell('Rage', 8, False, 5),
+            Spell('Combat hit', 18, False, 3),
+            Spell('Horn fury', 15, False, 2),
+            Spell('TakeDown', 10, False, 50),
+            Spell('Rage', 13, False, 5),
         ]
     ),
         PokemonBase(
@@ -107,10 +107,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.WATER,
         spells=[
-            Spell('Tackle', 5, False, 55),
-            Spell('Water punch', 16, False, 3),
-            Spell('splash', 8, False, 3),
-            Spell('Shell hit', 7, False, 5),
+            Spell('Tackle', 11, False, 55),
+            Spell('Water punch', 21, False, 3),
+            Spell('splash', 14, False, 3),
+            Spell('Shell hit', 11, False, 5),
         ]
     ),
         PokemonBase(
@@ -119,10 +119,10 @@ DOGEMONS = [
         lvl=2,
         type=PokemonType.WATER,
         spells=[
-            Spell('Tackle', 6, False, 55),
-            Spell('Water gun', 18, False, 3),
-            Spell('Bubble', 8, False, 3),
-            Spell('Shell hit', 6, False, 3),
+            Spell('Tackle', 11, False, 55),
+            Spell('Water gun', 23, False, 3),
+            Spell('Bubble', 11, False, 3),
+            Spell('Shell hit', 11, False, 3),
         ]
     ),
         PokemonBase(
@@ -131,10 +131,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.WATER,
         spells=[
-            Spell('Smack', 4, False, 55),
-            Spell('Quick spin', 8, False, 4),
-            Spell('Splash', 7, False, 6),
-            Spell('Water jet', 9, False, 3),
+            Spell('Smack', 11, False, 55),
+            Spell('Quick spin', 11, False, 4),
+            Spell('Splash', 13, False, 6),
+            Spell('Water jet', 15, False, 3),
         ]
     ),
         PokemonBase(
@@ -143,10 +143,10 @@ DOGEMONS = [
         lvl=2,
         type=PokemonType.WATER,
         spells=[
-            Spell('Wrap', 13, False, 5),
-            Spell('Tight Sting', 14, False, 3),
-            Spell('Splash', 5, False, 60),
-            Spell('Supersclosis', 16, False, 2),
+            Spell('Wrap', 16, False, 5),
+            Spell('Tight Sting', 19, False, 3),
+            Spell('Splash', 11, False, 60),
+            Spell('Supersclosis', 20, False, 2),
         ]
     ),
         PokemonBase(
@@ -155,10 +155,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.WATER,
         spells=[
-            Spell('Bite', 5, False, 25),
+            Spell('Bite', 11, False, 25),
             Spell('Swim Deep', 0, True, 3),
-            Spell('Gel Grip', 10, False, 3),
-            Spell('Shower', 9, False, 4),
+            Spell('Gel Grip', 14, False, 3),
+            Spell('Shower', 14, False, 4),
         ]
     ),
         PokemonBase(
@@ -167,10 +167,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.WATER,
         spells=[
-            Spell('Bite', 6, False, 25),
-            Spell('Water Beam', 5, False, 30),
-            Spell('Splash', 8, False, 3),
-            Spell('Shower', 9, False, 2),
+            Spell('Bite', 11, False, 25),
+            Spell('Water Beam', 10, False, 30),
+            Spell('Splash', 13, False, 3),
+            Spell('Shower', 14, False, 2),
         ]
     ),
         PokemonBase(
@@ -179,10 +179,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.ROCK,
         spells=[
-            Spell('Rock throw', 13, False, 2),
-            Spell('Tackle', 5, False, 30),
-            Spell('Punch', 9, False, 3),
-            Spell('Linear hit', 9, False, 4),
+            Spell('Rock throw', 18, False, 2),
+            Spell('Tackle', 11, False, 30),
+            Spell('Punch', 14, False, 3),
+            Spell('Linear hit', 15, False, 4),
         ]
     ),
         PokemonBase(
@@ -191,10 +191,10 @@ DOGEMONS = [
         lvl=2,
         type=PokemonType.ROCK,
         spells=[
-            Spell('Stone Edge', 16, False, 2),
-            Spell('Lunge', 13, False, 4),
-            Spell('Tumble', 6, False, 30),
-            Spell('Mega hit', 14, False, 2),
+            Spell('Stone Edge', 21, False, 2),
+            Spell('Lunge', 16, False, 4),
+            Spell('Tumble', 11, False, 30),
+            Spell('Mega hit', 19, False, 2),
         ]
     ),
         PokemonBase(
@@ -203,10 +203,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.ROCK,
         spells=[
-            Spell('Rock Shower', 16, False, 5),
-            Spell('Stone Impact', 9, False, 4),
+            Spell('Rock Shower', 21, False, 5),
+            Spell('Stone Impact', 13, False, 4),
             Spell('Deep Dig', 0, True, 3),
-            Spell('RockHit', 6, False, 50),
+            Spell('RockHit', 12, False, 50),
         ]
     ),
         PokemonBase(
@@ -215,10 +215,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.ROCK,
         spells=[
-            Spell('Double Throw', 10, False, 5),
-            Spell('Tackle', 5, False, 40),
+            Spell('Double Throw', 14, False, 5),
+            Spell('Tackle', 11, False, 40),
             Spell('Dance', 0, True, 3),
-            Spell('Chop', 9, False, 3),
+            Spell('Chop', 14, False, 3),
         ]
     ),
         PokemonBase(
@@ -227,10 +227,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.ROCK,
         spells=[
-            Spell('Tight Hit', 13, False, 5),
-            Spell('Crush', 10, False, 3),
-            Spell('Horn smash', 5, False, 7),
-            Spell('Chop', 4, False, 50),
+            Spell('Tight Hit', 16, False, 5),
+            Spell('Crush', 14, False, 3),
+            Spell('Horn smash', 11, False, 7),
+            Spell('Chop', 10, False, 50),
         ]
     ),
         PokemonBase(
@@ -239,10 +239,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.ROCK,
         spells=[
-            Spell('Spin Hit', 14, False, 3),
-            Spell('Bind Attack', 6, False, 50),
-            Spell('Fossil fangs', 9, False, 5),
-            Spell('Wing Spin', 9, False, 3),
+            Spell('Spin Hit', 16, False, 3),
+            Spell('Bind Attack', 11, False, 50),
+            Spell('Fossil fangs', 13, False, 5),
+            Spell('Wing Spin', 15, False, 3),
         ]
     ),
         PokemonBase(
@@ -251,9 +251,9 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.GRASS,
         spells=[
-            Spell('Quick Hit', 5, False, 30),
-            Spell('Leaf Cut', 9, False, 8),
-            Spell('Green Razors', 13, False, 3),
+            Spell('Quick Hit', 12, False, 30),
+            Spell('Leaf Cut', 15, False, 8),
+            Spell('Green Razors', 17, False, 3),
             Spell('Sleep seed', 0, True, 3),
         ]
     ),
@@ -263,10 +263,10 @@ DOGEMONS = [
         lvl=2,
         type=PokemonType.GRASS,
         spells=[
-            Spell('Razor Leaf', 16, False, 4),
-            Spell('Sap Bite', 9, False, 9),
-            Spell('Leaf Sting', 12, False, 2),
-            Spell('Sling Scrach', 6, False, 30),
+            Spell('Razor Leaf', 21, False, 4),
+            Spell('Sap Bite', 15, False, 9),
+            Spell('Leaf Sting', 18, False, 2),
+            Spell('Sling Scrach', 11, False, 30),
         ]
     ),
         PokemonBase(
@@ -275,10 +275,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.GRASS,
         spells=[
-            Spell('Razor Leaf', 13, False, 3),
-            Spell('Drool', 9, False, 3),
+            Spell('Razor Leaf', 16, False, 3),
+            Spell('Drool', 15, False, 3),
             Spell('Sleep spell', 0, True, 3),
-            Spell('Scrach', 7, False, 30),
+            Spell('Scrach', 11, False, 30),
         ]
     ),
 
@@ -288,9 +288,9 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.GRASS,
         spells=[
-            Spell('Vine Tease', 12, False, 5),
-            Spell('Gentle Slap', 5, False, 50),
-            Spell('Grass Knot',9, False, 5),
+            Spell('Vine Tease', 16, False, 5),
+            Spell('Gentle Slap', 11, False, 50),
+            Spell('Grass Knot',14, False, 5),
             Spell('Run', 0, True, 3),
         ]
     ),
@@ -300,10 +300,10 @@ DOGEMONS = [
         lvl=2,
         type=PokemonType.GRASS,
         spells=[
-            Spell('Super Eggsplosion', 13, False, 4),
-            Spell('Seed bullets', 8, False, 5),
-            Spell('Stomp',12, False, 3),
-            Spell('Leaf throw', 6, False, 30),
+            Spell('Super Eggsplosion', 16, False, 4),
+            Spell('Seed bullets', 12, False, 5),
+            Spell('Stomp',16, False, 3),
+            Spell('Leaf throw', 13, False, 30),
         ]
     ),
         PokemonBase(
@@ -312,10 +312,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.FIRE,
         spells=[
-            Spell('Tackle', 6, False, 30),
-            Spell('Fire balls', 9, False, 5),
-            Spell('Flare',15, False, 2),
-            Spell('Heat up', 6, False, 30),
+            Spell('Tackle', 12, False, 30),
+            Spell('Fire balls', 16, False, 5),
+            Spell('Flare',20, False, 2),
+            Spell('Heat up', 13, False, 30),
         ]
     ),
         PokemonBase(
@@ -324,10 +324,10 @@ DOGEMONS = [
         lvl=2,
         type=PokemonType.FIRE,
         spells=[
-            Spell('Ember', 7, False, 40),
-            Spell('Fury Blaze', 14, False, 3),
-            Spell('flames',9, False, 5),
-            Spell('Fire spin', 15, False, 3),
+            Spell('Ember', 14, False, 40),
+            Spell('Fury Blaze', 19, False, 3),
+            Spell('flames',14, False, 5),
+            Spell('Fire spin', 20, False, 3),
         ]
     ),
         PokemonBase(
@@ -336,10 +336,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.FIRE,
         spells=[
-            Spell('Flare', 9, False, 3),
+            Spell('Flare', 14, False, 3),
             Spell('Confuse ray', 0, True, 3),
-            Spell('Tail Fire',15, False, 2),
-            Spell('Scratch', 4, False, 40),
+            Spell('Tail Fire',20, False, 2),
+            Spell('Scratch', 11, False, 40),
         ]
     ),
         PokemonBase(
@@ -348,10 +348,10 @@ DOGEMONS = [
         lvl=2,
         type=PokemonType.FIRE,
         spells=[
-            Spell('Fire maze', 15, False, 3),
-            Spell('Sun Burn', 9, False, 3),
-            Spell('Flame throw',8, False, 5),
-            Spell('Scratch', 5, False, 40),
+            Spell('Fire maze', 29, False, 3),
+            Spell('Sun Burn', 14, False, 3),
+            Spell('Flame throw',13, False, 5),
+            Spell('Scratch', 11, False, 40),
         ]
     ),
         PokemonBase(
@@ -360,10 +360,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.FIRE,
         spells=[
-            Spell('Fire kick', 13, False, 3),
-            Spell('Flame showers', 8, False, 5),
-            Spell('Fire jix',9, False, 3),
-            Spell('Scratch', 4, False, 40),
+            Spell('Fire kick', 18, False, 3),
+            Spell('Flame showers', 14, False, 5),
+            Spell('Fire jix',15, False, 3),
+            Spell('Scratch', 11, False, 40),
         ]
     ),
         PokemonBase(
@@ -372,10 +372,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.FIRE,
         spells=[
-            Spell('Tackle', 4, False, 35),
+            Spell('Tackle', 11, False, 35),
             Spell('Heat Sleep', 0, True, 3),
-            Spell('Volvano clouds',13, False, 3),
-            Spell('Fireworks', 11, False, 3),
+            Spell('Volvano clouds',18, False, 3),
+            Spell('Fireworks', 16, False, 3),
         ]
     ),
         PokemonBase(
@@ -385,9 +385,9 @@ DOGEMONS = [
         type=PokemonType.GHOST,
         spells=[
             Spell('Fade out', 0, True, 3),
-            Spell('Soul pin', 13, False, 5),
-            Spell('Nightmare',15, False, 3),
-            Spell('Gas Attack', 6, False, 50),
+            Spell('Soul pin', 18, False, 5),
+            Spell('Nightmare',20, False, 3),
+            Spell('Gas Attack', 11, False, 50),
         ]
     ),
         PokemonBase(
@@ -396,10 +396,10 @@ DOGEMONS = [
         lvl=2,
         type=PokemonType.GHOST,
         spells=[
-            Spell('Sponky shot', 7, False, 30),
-            Spell('Shadow ball', 13, False, 3),
-            Spell('Nightmare',16, False, 3),
-            Spell('Dreameater', 16, False, 3),
+            Spell('Sponky shot', 14, False, 30),
+            Spell('Shadow ball', 18, False, 3),
+            Spell('Nightmare',23, False, 3),
+            Spell('Dreameater', 21, False, 3),
         ]
     ),
         PokemonBase(
@@ -408,10 +408,10 @@ DOGEMONS = [
         lvl=3,
         type=PokemonType.GHOST,
         spells=[
-            Spell('Pain burst', 20, False, 1),
-            Spell('Curse', 13, False, 20),
-            Spell('Shadow Skip',17, False, 3),
-            Spell('Soul crush', 25, False, 1),
+            Spell('Pain burst', 25, False, 1),
+            Spell('Curse', 18, False, 20),
+            Spell('Shadow Skip',22, False, 3),
+            Spell('Soul crush', 30, False, 1),
         ]
     ),
         PokemonBase(
@@ -420,10 +420,10 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.ELECTRIC,
         spells=[
-            Spell('Electro ball', 20, False, 1),
+            Spell('Electro ball', 25, False, 1),
             Spell('Charge', 0, True, 3),
-            Spell('Tackle',5, False, 50),
-            Spell('Pike strike', 12, False, 5),
+            Spell('Tackle',11, False, 50),
+            Spell('Pike strike', 17, False, 5),
         ]
     ),
         PokemonBase(
@@ -432,10 +432,10 @@ DOGEMONS = [
         lvl=2,
         type=PokemonType.ELECTRIC,
         spells=[
-            Spell('Electro Spark', 17, False, 3),
-            Spell('Shock wave', 12, False, 3),
-            Spell('Tail Spark',9, False, 5),
-            Spell('Voltage hit', 6, False, 50),
+            Spell('Electro Spark', 23, False, 3),
+            Spell('Shock wave', 17, False, 3),
+            Spell('Tail Spark',13, False, 5),
+            Spell('Voltage hit', 11, False, 50),
         ]
     ),
         PokemonBase(
@@ -444,34 +444,34 @@ DOGEMONS = [
         lvl=1,
         type=PokemonType.ELECTRIC,
         spells=[
-            Spell('Electric dip', 13, False, 1),
-            Spell('Shock stess', 8, False, 5),
-            Spell('Quick hit',5, False, 50),
-            Spell('electro roll', 11, False, 3),
+            Spell('Electric dip', 16, False, 1),
+            Spell('Shock stess', 13, False, 5),
+            Spell('Quick hit',10, False, 50),
+            Spell('electro roll', 15, False, 3),
         ]
     ),
         PokemonBase(
         name='mewtu',
-        hp=250,
+        hp=200,
         lvl=10,
         type=PokemonType.LEGENDARY,
         spells=[
-            Spell('Psychic', 15, False, 3),
-            Spell('Big Bang', 40, False, 1),
+            Spell('Psychic', 20, False, 3),
+            Spell('Big Bang', 45, False, 1),
             Spell('Meditate',0, True, 5),
-            Spell('Burst', 5, False, 50),
+            Spell('Burst', 12, False, 50),
         ]
     ),
         PokemonBase(
         name='Moltras',
-        hp=230,
+        hp=190,
         lvl=10,
         type=PokemonType.LEGENDARY,
         spells=[
-            Spell('Death Flames', 30, False, 2),
-            Spell('Soul Burn', 40, False, 1),
-            Spell('Earth Crush',10, True, 2),
-            Spell('Fire Spin', 5, False, 50),
+            Spell('Death Flames', 35, False, 2),
+            Spell('Soul Burn', 45, False, 1),
+            Spell('Earth Crush',13, True, 2),
+            Spell('Fire Spin', 10, False, 50),
         ]
     )
 ]
