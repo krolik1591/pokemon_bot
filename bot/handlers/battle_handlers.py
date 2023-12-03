@@ -238,6 +238,7 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
     await call.answer()
 
 
+
 async def try_to_edit_caption(call, text, kb):
     try:
         if kb is not None:
