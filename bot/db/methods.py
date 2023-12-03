@@ -84,7 +84,7 @@ if __name__ == '__main__':
     async def main():
         # x = await get_active_game(357108179)
         x = await get_active_game(357108179)
-        print(x['bet'])
+        print(x)
 
 
     asyncio.run(main())

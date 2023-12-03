@@ -66,15 +66,13 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
     if call.from_user.id == player_1_id:
         return await call.answer('You cannot battle with yourself!')
 
-    try:
-        bet = int(bet)      # bet == 'None' if battle without bet
-        err = await pre_game_check(call.from_user.id, bet)
-        if err:
-            return await call.answer(err)
-        await take_money_from_players(player_1_id, call.from_user.id, int(bet))
+    bet = int(bet) if bet != 'None' else None
+    err = await pre_game_check(call.from_user.id, bet)
+    if err:
+        return await call.answer(err)
 
-    except ValueError:
-        bet = None
+    if bet is not None:
+        await take_money_from_players(player_1_id, call.from_user.id, bet)
 
     game = Game.new(
         Player.new(await state.bot.get_chat(player_1_id)),
@@ -141,25 +139,37 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
 
     if action == 'attack':
         kb = select_attack_menu(game)
-        return await call.message.edit_reply_markup(reply_markup=kb)
+        await try_to_edit_reply_markup(call, kb)
+        return
 
     if action == 'special_cards':
         if not game.get_attacker().special_card:
             return await call.answer('You have no special cards!')
         kb = special_cards_menu(game)
-        return await call.message.edit_reply_markup(reply_markup=kb)
+        await try_to_edit_reply_markup(call, kb)
+        return
 
     if action == 'flee':
-        defencer, winner = game.get_attacker_defencer()
-        db_game = await db.get_active_game(winner.id)
-        reward = db_game['bet'] * 2 if db_game['bet'] else 0
-        text = f'{winner.mention} won {reward} {winner.pokemon.name} while {defencer.mention} fled the battle'
-        await call.message.edit_caption(caption=text)
-        await end_game(winner.id, game)
+        await process_end_game(call, state, game)
 
-        # if bot is admin
-        await kick_user(state, call.message.chat.id, defencer)
-        return
+
+async def process_end_game(call, state, game, is_timeout=False):
+    if is_timeout:
+        winner, looser = game.is_game_over_coz_timeout()
+    else:
+        looser, winner = game.get_attacker_defencer()
+
+    db_game = await db.get_active_game(winner.id)
+    reward = db_game['bet'] * 2 if db_game['bet'] else 0
+
+    text = f'{winner.mention} won {reward} {winner.pokemon.name} while {looser.mention} fled the battle'
+    await try_to_edit_caption(call, text, kb=None)
+    # await call.message.edit_caption(caption=text)
+
+    await end_game(winner.id, game)
+
+    # if bot is admin
+    await kick_user(state, call.message.chat.id, looser)
 
 
 @router.callback_query(Text(startswith='fight|'))
@@ -188,23 +198,14 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
 
         is_game_over = game.is_game_over()
         if is_game_over:
-            winner, loser = is_game_over
-            db_game = await db.get_active_game(winner.id)
-            reward = db_game['bet'] * 2 if db_game['bet'] else 0
-            text = f'{winner.mention} you are win {reward}'
-            await call.message.edit_caption(caption=text)
-            await end_game(winner.id, game)
-
-            # if bot is admin
-            await kick_user(state, call.message.chat.id, loser)
-            return
+            await process_end_game(call, state, game)
 
         text, kb = select_dogemon_menu(game, latest_actions=actions)
         return await call.message.edit_caption(caption=text, reply_markup=kb)
 
     # continue battle if pokemons are ok
     text, kb = battle_menu(game, latest_actions=actions)
-    await call.message.edit_caption(caption=text, reply_markup=kb)
+    await try_to_edit_caption(call, text, kb)
 
 
 @router.callback_query(Text(startswith='revive_pokemon|'))
@@ -232,17 +233,30 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
 
     winner, looser = game.is_game_over_coz_timeout()
     if winner:
-        db_game = await db.get_active_game(winner.id)
-        reward = db_game['bet'] * 2 if db_game['bet'] else 0
-        text = f'{winner.mention} won {reward} {winner.pokemon.name} while {looser.mention} was inactive'
-        await call.message.edit_caption(caption=text)
-        await end_game(winner.id, game)
-
-        # if bot is admin
-        await kick_user(state, call.message.chat.id, looser)
-        return
+        await process_end_game(call, state, game, is_timeout=True)
 
     await call.answer()
+
+
+async def try_to_edit_caption(call, text, kb):
+    try:
+        if kb is not None:
+            await call.message.edit_caption(caption=text, reply_markup=kb)
+        else:
+            await call.message.edit_caption(caption=text)
+    except exceptions.TelegramRetryAfter as ex:
+        print(f'Too many requests, wait {ex.retry_after} seconds')
+        await asyncio.sleep(ex.retry_after)
+        await call.message.edit_caption(caption=text, reply_markup=kb)
+
+
+async def try_to_edit_reply_markup(call, kb):
+    try:
+        await call.message.edit_reply_markup(reply_markup=kb)
+    except exceptions.TelegramRetryAfter as ex:
+        print(f'Too many requests, wait {ex.retry_after} seconds')
+        await asyncio.sleep(ex.retry_after)
+        await call.message.edit_reply_markup(reply_markup=kb)
 
 
 async def kick_user(state, chat_id, looser):

@@ -7,7 +7,7 @@ async def pre_game_check(player_id, bet, without_bets=False):
     if active_game:
         return f'You are already in game!'
 
-    if without_bets:
+    if without_bets or bet is None:
         return None
 
     user1_balance = await db.get_user_balance(player_id)

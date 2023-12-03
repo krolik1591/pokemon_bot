@@ -121,7 +121,7 @@ class Game:
         delta_time = time.time() - attacker.last_move_time
         if delta_time > const.TIMEOUT:
             return defencer, attacker
-        return None
+        return None, None
 
     def get_attacker_defencer(self):
         if self.get_attacker_index() == 1:
