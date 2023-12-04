@@ -4,6 +4,7 @@ from bot.models.pokemon_base import PokemonBase
 from bot.models.pokemon_types import PokemonType
 from bot.models.spell import Spell
 
+# main
 DOGEMONS = [
     PokemonBase(
         name='Snorlex',
@@ -472,6 +473,230 @@ DOGEMONS = [
             Spell('Soul Burn', 45, False, 1),
             Spell('Earth Crush',13, True, 2),
             Spell('Fire Spin', 10, False, 50),
+        ]
+    )
+]
+
+# testing
+DOGGEMONS = [
+    PokemonBase(
+        name='Snorlex',
+        hp=150,
+        lvl=1,
+        type=PokemonType.BASIC,
+        spells=[
+            Spell('Tight Slam', 63, False, 5),
+            Spell('Punch', 11, False, 50),
+            Spell('Rest', 0, True, 5),
+            Spell('Heavt Imapct', 18, False, 1),
+        ]
+    ),
+    PokemonBase(
+        name='Pidgei',
+        hp=60,
+        lvl=1,
+        type=PokemonType.BASIC,
+        spells=[
+            Spell('Wings cut', 55, False, 5),
+            Spell('WindSpin', 0, True, 3),
+            Spell('Tackle', 11, False, 50),
+            Spell('Gust', 23, False, 2),
+        ]
+    ),
+    PokemonBase(
+        name='Pidgiotto',
+        hp=120,
+        lvl=2,
+        type=PokemonType.BASIC,
+        spells=[
+            Spell('Tackle', 60, False, 50),
+            Spell('Gust', 23, False, 3),
+            Spell('Peck', 15, False, 3),
+            Spell('Wing hit', 13, False, 5),
+        ]
+    ),
+    PokemonBase(
+        name='Rattatey',
+        hp=50,
+        lvl=1,
+        type=PokemonType.BASIC,
+        spells=[
+            Spell('Scratch', 50, False, 50),
+            Spell('Quick hit', 35, False, 3),
+            Spell('Tackle', 13, False, 3),
+            Spell('Focus', 0, True, 3),
+        ]
+    )
+]
+
+# testing two 
+DOGGGEMONS = [
+    PokemonBase(
+        name='Snorlex',
+        hp=15,
+        lvl=1,
+        type=PokemonType.BASIC,
+        spells=[
+            Spell('Tight Slam', 13, False, 5),
+            Spell('Punch', 11, False, 50),
+            Spell('Rest', 0, True, 5),
+            Spell('Heavt Imapct', 18, False, 1),
+        ]
+    ),
+    PokemonBase(
+        name='Pidgei',
+        hp=6,
+        lvl=1,
+        type=PokemonType.BASIC,
+        spells=[
+            Spell('Wings cut', 15, False, 5),
+            Spell('WindSpin', 0, True, 3),
+            Spell('Tackle', 11, False, 50),
+            Spell('Gust', 23, False, 2),
+        ]
+    ),
+    PokemonBase(
+        name='Pidgiotto',
+        hp=12,
+        lvl=2,
+        type=PokemonType.BASIC,
+        spells=[
+            Spell('Tackle', 11, False, 50),
+            Spell('Gust', 23, False, 3),
+            Spell('Peck', 15, False, 3),
+            Spell('Wing hit', 13, False, 5),
+        ]
+    ),
+    PokemonBase(
+        name='Rattatey',
+        hp=5,
+        lvl=1,
+        type=PokemonType.BASIC,
+        spells=[
+            Spell('Scratch', 11, False, 50),
+            Spell('Quick hit', 15, False, 3),
+            Spell('Tackle', 13, False, 3),
+            Spell('Focus', 0, True, 3),
+        ]
+    ),
+    PokemonBase(
+        name='Raticatta',
+        hp=9,
+        lvl=2,
+        type=PokemonType.BASIC,
+        spells=[
+            Spell('Scratch', 12, False, 50),
+            Spell('Poison Bite', 20, False, 1),
+            Spell('Tail Hit', 15, False, 3),
+            Spell('Tailwhip', 13, False, 3),
+        ]
+    ),
+    PokemonBase(
+        name='Jigglimuff',
+        hp=5,
+        lvl=1,
+        type=PokemonType.BASIC,
+        spells=[
+            Spell('Rollout', 15, False, 3),
+            Spell('Pound', 15, False, 3),
+            Spell('Slap', 9, False, 50),
+            Spell('Sing', 0, True, 5),
+        ]
+    ),
+        PokemonBase(
+        name='Miowth',
+        hp=7,
+        lvl=1,
+        type=PokemonType.BASIC,
+        spells=[
+            Spell('Scratch', 10, False, 50),
+            Spell('Scream Out', 15, False, 3),
+            Spell('Cat kick', 15, False, 3),
+            Spell('Confuse', 0, True, 3),
+        ]
+    ),
+        PokemonBase(
+        name='Taures',
+        hp=11,
+        lvl=1,
+        type=PokemonType.BASIC,
+        spells=[
+            Spell('Combat hit', 18, False, 3),
+            Spell('Horn fury', 15, False, 2),
+            Spell('TakeDown', 10, False, 50),
+            Spell('Rage', 13, False, 5),
+        ]
+    ),
+        PokemonBase(
+        name='Scuirtle',
+        hp=8,
+        lvl=1,
+        type=PokemonType.WATER,
+        spells=[
+            Spell('Tackle', 11, False, 55),
+            Spell('Water punch', 21, False, 3),
+            Spell('splash', 14, False, 3),
+            Spell('Shell hit', 11, False, 5),
+        ]
+    ),
+        PokemonBase(
+        name='Blastoicey',
+        hp=15,
+        lvl=2,
+        type=PokemonType.WATER,
+        spells=[
+            Spell('Tackle', 11, False, 55),
+            Spell('Water gun', 23, False, 3),
+            Spell('Bubble', 11, False, 3),
+            Spell('Shell hit', 11, False, 3),
+        ]
+    ),
+        PokemonBase(
+        name='Starey',
+        hp=7,
+        lvl=1,
+        type=PokemonType.WATER,
+        spells=[
+            Spell('Smack', 11, False, 55),
+            Spell('Quick spin', 11, False, 4),
+            Spell('Splash', 13, False, 6),
+            Spell('Water jet', 15, False, 3),
+        ]
+    ),
+        PokemonBase(
+        name='Tenticruel',
+        hp=17,
+        lvl=2,
+        type=PokemonType.WATER,
+        spells=[
+            Spell('Wrap', 16, False, 5),
+            Spell('Tight Sting', 19, False, 3),
+            Spell('Splash', 11, False, 60),
+            Spell('Supersclosis', 20, False, 2),
+        ]
+    ),
+        PokemonBase(
+        name='Crabby',
+        hp=8,
+        lvl=1,
+        type=PokemonType.WATER,
+        spells=[
+            Spell('Bite', 11, False, 25),
+            Spell('Swim Deep', 0, True, 3),
+            Spell('Gel Grip', 14, False, 3),
+            Spell('Shower', 14, False, 4),
+        ]
+    ),
+        PokemonBase(
+        name='Seahorse',
+        hp=5,
+        lvl=1,
+        type=PokemonType.WATER,
+        spells=[
+            Spell('Bite', 11, False, 25),
+            Spell('Water Beam', 10, False, 30),
+            Spell('Splash', 13, False, 3),
+            Spell('Shower', 14, False, 2),
         ]
     )
 ]

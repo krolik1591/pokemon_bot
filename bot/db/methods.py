@@ -1,23 +1,14 @@
 from bson import ObjectId
+from datetime import datetime
 
 from bot.db.db import mongodb
-
+from functools import reduce 
 
 # USERS
 
-# after adapting to your code, it (USERS methods) can be removed
-# other_handlers.py too
-async def create_new_user(user_id):
-    await mongodb['users'].insert_one({
-        'user_id': user_id,
-        'balance': 100,
-    })
-
-
-async def is_user_exist(user_id):
-    user = await mongodb['users'].find_one({'user_id': user_id})
+async def is_user_exist(tg_userid):
+    user = await mongodb['users'].find_one({'tg_userid': tg_userid})
     return bool(user)
-
 
 # GAME
 
@@ -47,16 +38,25 @@ async def update_game(game_id, game_info):
 
 # REWORK IT
 
-async def get_user_balance(user_id):
-    user = await mongodb['users'].find_one({'user_id': user_id})
-    return user['balance']
+async def get_user_balance(tg_userid):
+    user = await mongodb['users'].find_one({ "tg_userid": tg_userid})
+    
+    total_deposit = reduce(lambda total, deposit: total + deposit['value'], user['deposits'], 0) if user['deposits'] else 0
+
+    total_withdrawals = reduce(lambda total, withdrawal: total + withdrawal['value'], user['withdrawals'], 0) if user['withdrawals'] else 0
+    
+    token_withdrawals = reduce(lambda total, withdrawal: total + withdrawal['value'], user['tokenWithdrawals'], 0) if user['tokenWithdrawals'] else 0
+
+    balance = total_deposit - (total_withdrawals + token_withdrawals)
+    
+    return balance if balance is not None else 0
 
 
-async def get_active_game(user_id):
+async def get_active_game(tg_userid):
     game = await mongodb['games'].find_one({
         '$or': [
-            {'player1.id': user_id},
-            {'player2.id': user_id}
+            {'player1.id': tg_userid},
+            {'player2.id': tg_userid}
         ],
         'winner': None
     },
@@ -64,14 +64,53 @@ async def get_active_game(user_id):
     return game
 
 
-async def update_user_balance(user_id, balance_to_add):
+async def update_user_balance(tg_userid, balance_to_add):
     await mongodb['users'].update_one(
         {
-            'user_id': user_id
+            'tg_userid': tg_userid
         },
         {
             '$inc': {
                 'balance': balance_to_add
+            }
+        }
+    )
+
+async def deposit_tokens(tg_userid, amount, game_id = str(10000)):
+    new_deposit = { 'txnHash': game_id, 'value': amount, 'time':  datetime.now()}
+    await mongodb['users'].update_one(
+        {
+            'tg_userid': tg_userid
+        },
+        {
+            '$push': {
+                "deposits" : new_deposit
+            }
+        }
+    )
+
+async def deposit_burn(amount): 
+    new_deposit = { 'txnHash': "10000", 'value': amount, 'time': datetime.now()}
+    await mongodb['users'].update_one(
+        {
+            'tg_userid': 99999 
+        },
+        {
+            "$push": {
+                "deposits": new_deposit
+            }
+        }
+    )
+
+async def withdraw_tokens(tg_userid, amount, game_id = str(10000)):
+    new_withdraw = { 'txnHash': game_id, 'value': amount, 'time':  datetime.now()}
+    await mongodb['users'].update_one(
+        {
+            'tg_userid': tg_userid
+        },
+        {
+            '$push': {
+                "withdrawals" : new_withdraw
             }
         }
     )

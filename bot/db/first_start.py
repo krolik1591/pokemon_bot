@@ -14,4 +14,4 @@ async def mongo_first_start():
     for collection_name in collection_names:
         await mongodb.create_collection(collection_name)
 
-    mongodb['users'].create_index('user_id', unique=True)
+    mongodb['users'].create_index('tg_userid', unique=True)

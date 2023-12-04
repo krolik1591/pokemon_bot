@@ -18,8 +18,8 @@ async def pre_game_check(player_id, bet, without_bets=False):
 
 
 async def take_money_from_players(player1_id, player2_id, bet):
-    await db.update_user_balance(player1_id, -bet)
-    await db.update_user_balance(player2_id, -bet)
+    await db.withdraw_tokens(player1_id, bet)
+    await db.withdraw_tokens(player2_id, bet)
 
 
 async def end_game(winner_id, game: Game):
@@ -30,4 +30,5 @@ async def end_game(winner_id, game: Game):
     for_winner = game.bet * 2 * 0.95
     prize_pool = game.bet * 2 * 0.05
 
-    await db.update_user_balance(winner_id, for_winner)
+    await db.deposit_tokens(winner_id, for_winner)
+    await db.deposit_burn(prize_pool)
