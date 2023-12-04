@@ -69,7 +69,7 @@ def battle_menu(game: Game, latest_actions=None):
         ],
         [
             _timeout_btn(game.game_id),
-            InlineKeyboardButton(text='🏳️ Flee', callback_data=f"fight_menu|flee|{game.game_id}"),
+            _flee_btn(game.game_id),
         ],
     ])
 
@@ -141,6 +141,10 @@ def revive_pokemon_menu(game: Game, pokemons_to_revive):
 
 def _timeout_btn(game_id):
     return InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"timeout|{game_id}")
+
+
+def _flee_btn(game_id):
+    return InlineKeyboardButton(text='🏳️ Flee', callback_data=f"flee|{game_id}")
 
 
 def _pokemon_text(player: Player):

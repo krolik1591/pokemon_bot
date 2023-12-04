@@ -115,6 +115,12 @@ class Game:
         if self.player2.is_lose():
             return self.player1, self.player2
 
+    def game_over_coz_flee(self, looser_id):
+        # return (winner, loser)
+        if looser_id == self.player1.id:
+            return self.player2, self.player1
+        return self.player1, self.player2
+
     def is_game_over_coz_timeout(self):
         # return winner or None
         attacker, defencer = self.get_attacker_defencer()
