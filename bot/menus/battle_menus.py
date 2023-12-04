@@ -22,10 +22,10 @@ def waiting_battle_menu(user: User, bet):
     return text, kb
 
 
-def select_dogemon_menu(game, first_move=False, latest_actions=None):
+def select_dogemon_menu(game, first_move=False, latest_actions=None, change_first_move=False):
     def _pokemon_btn(pokemon_name):
         btn_text = _pokemon_text_small(DOGEMONS_MAP[pokemon_name])
-        return InlineKeyboardButton(text=btn_text, callback_data=f"select_dogemon_menu|{pokemon_name}|{game.game_id}")
+        return InlineKeyboardButton(text=btn_text, callback_data=f"select_dogemon_menu|{pokemon_name}|{game.game_id}|{change_first_move}")
 
     player, opponent = game.get_attacker_defencer()
 
@@ -90,7 +90,7 @@ def select_attack_menu(game: Game):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         *spell_btns,
         [
-            InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon_menu|None|{game.game_id}"),
+            InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon_menu|None|{game.game_id}|False"),
             _timeout_btn(game.game_id),
         ]
     ])
@@ -111,7 +111,7 @@ def special_cards_menu(game: Game):
             InlineKeyboardButton(text=f'{player.special_card}', callback_data=callback_data),
         ],
         [
-            InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon_menu|None|{game.game_id}"),
+            InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon_menu|None|{game.game_id}|False"),
             _timeout_btn(game.game_id),
         ],
     ])
@@ -131,7 +131,7 @@ def revive_pokemon_menu(game: Game, pokemons_to_revive):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         revive_btns,
         [
-            InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon_menu|None|{game.game_id}"),
+            InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon_menu|None|{game.game_id}|False"),
             _timeout_btn(game.game_id),
         ],
     ])

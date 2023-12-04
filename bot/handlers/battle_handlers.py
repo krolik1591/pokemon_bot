@@ -100,7 +100,7 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(Text(startswith='select_dogemon_menu|'))
 async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
-    _, pokemon, game_id = call.data.split('|')
+    _, pokemon, game_id, change_first_move = call.data.split('|')
 
     game = await game_service.get_game(game_id)
 
@@ -121,6 +121,8 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
 
     # both players selected pokemon
     if pokemon != 'None':
+        game.end_move()
+    if change_first_move == 'True':
         game.end_move()
     await game_service.save_game(game)  # save game without end move - the last player to pick a pokemon attacks first
 
@@ -150,26 +152,7 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
         return
 
     if action == 'flee':
-        await process_end_game(call, state, game)
-
-
-async def process_end_game(call, state, game, is_timeout=False):
-    if is_timeout:
-        winner, looser = game.is_game_over_coz_timeout()
-    else:
-        looser, winner = game.get_attacker_defencer()
-
-    db_game = await db.get_active_game(winner.id)
-    reward = db_game['bet'] * 2 if db_game['bet'] else 0
-
-    text = f'{winner.mention} won {reward} {winner.pokemon.name} while {looser.mention} fled the battle'
-    await try_to_edit_caption(call, text, kb=None)
-    # await call.message.edit_caption(caption=text)
-
-    await end_game(winner.id, game)
-
-    # if bot is admin
-    await kick_user(state, call.message.chat.id, looser)
+        await process_end_game(call, state, game, win_type='flee')
 
 
 @router.callback_query(Text(startswith='fight|'))
@@ -198,9 +181,10 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
 
         is_game_over = game.is_game_over()
         if is_game_over:
-            await process_end_game(call, state, game)
+            await process_end_game(call, state, game, win_type='clear')
+            return
 
-        text, kb = select_dogemon_menu(game, latest_actions=actions)
+        text, kb = select_dogemon_menu(game, latest_actions=actions, change_first_move=True)
         return await call.message.edit_caption(caption=text, reply_markup=kb)
 
     # continue battle if pokemons are ok
@@ -233,10 +217,32 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
 
     winner, looser = game.is_game_over_coz_timeout()
     if winner:
-        await process_end_game(call, state, game, is_timeout=True)
+        await process_end_game(call, state, game, win_type='timeout')
 
     await call.answer()
 
+
+async def process_end_game(call, state, game, win_type):
+    db_game = await db.get_active_game(call.from_user.id)
+    reward = db_game['bet'] * 2 if db_game['bet'] else 0
+
+    if win_type == 'flee':
+        winner, looser = game.is_game_over_coz_timeout()
+        text = f'{winner.mention} won {reward} {winner.pokemon.name} while {looser.mention} fled the battle'
+    elif win_type == 'clear':
+        looser, winner = game.get_attacker_defencer()
+        text = f'{winner.mention} won {reward} {winner.pokemon.name}. {looser.mention} has no pokemons left'
+    elif win_type == 'timeout':
+        winner, looser = game.is_game_over_coz_timeout()
+        text = f'{winner.mention} won {reward} {winner.pokemon.name} while {looser.mention} was inactive'
+    else:
+        raise ValueError(f'Unknown loose_type: {win_type}')
+
+    await try_to_edit_caption(call, text, kb=None)
+    await end_game(winner.id, game)
+
+    # if bot is admin
+    await kick_user(state, call.message.chat.id, looser)
 
 
 async def try_to_edit_caption(call, text, kb):
