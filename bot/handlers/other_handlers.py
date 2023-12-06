@@ -7,10 +7,11 @@ from bot.db import db
 router = Router()
 
 
-# @router.message(F.chat.type != "private", Text("/balance"))
+# @router.message(F.chat.type != "private", Text("/update"))
 # async def create_user_in_db(message: types.Message, state: FSMContext):
-#     exist = await db.is_user_exist(message.from_user.id)
-#     if not exist:
-#         await message.answer('Please create account in Dr Oak bot first')
-#         return
-#     return message.answer(await db.get_user_balance(tg_userid=message.from_user.id))
+#     await db.increase_exclusive_win(message.from_user.id)
+    # exist = await db.is_user_exist(message.from_user.id)
+    # if not exist:
+    #     await message.answer('Please create account in Dr Oak bot first')
+    #     return
+    # return message.answer(await db.get_user_balance(tg_userid=message.from_user.id))

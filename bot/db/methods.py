@@ -115,6 +115,34 @@ async def withdraw_tokens(tg_userid, amount, game_id = str(10000)):
         }
     )
 
+async def increase_exclusive_win(tg_userid): 
+    user = await mongodb['winners'].find_one({
+        'userid': tg_userid
+    })
+
+    if user == None:
+        existing_user = await mongodb['users'].find_one({
+            'tg_userid': tg_userid
+        })
+
+        await mongodb['winners'].insert_one({
+            'userid': tg_userid,
+            'wins': 1,
+            'name': existing_user['name'],
+            'username': existing_user['username']
+        })
+    else: 
+        await mongodb['winners'].update_one(
+            {
+                'userid': tg_userid
+            },
+            {
+                '$inc': {
+                    'wins': 1 
+                }
+            }
+        )
+
 
 if __name__ == '__main__':
     import asyncio

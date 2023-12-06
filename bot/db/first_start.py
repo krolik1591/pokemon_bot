@@ -9,7 +9,7 @@ async def mongo_first_start():
 
     print('First start, creating collections...')
 
-    collection_names = ['users', 'games']
+    collection_names = ['users', 'games', 'winners']
 
     for collection_name in collection_names:
         await mongodb.create_collection(collection_name)
