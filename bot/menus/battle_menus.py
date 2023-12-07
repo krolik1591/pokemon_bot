@@ -16,7 +16,9 @@ def waiting_battle_menu(user: User, bet):
     else:
         text += '\n\nNo bet'
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text='Join', callback_data=f"join_battle|{user.id}|{bet}")],
+        [
+            InlineKeyboardButton(text='Join', callback_data=f"join_battle|{user.id}|{bet}"),
+            InlineKeyboardButton(text='Cancel', callback_data=f"cancel_battle|{user.id}")],
     ])
 
     return text, kb
@@ -25,7 +27,8 @@ def waiting_battle_menu(user: User, bet):
 def select_dogemon_menu(game, first_move=False, latest_actions=None, change_first_move=False):
     def _pokemon_btn(pokemon_name):
         btn_text = _pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=True)
-        return InlineKeyboardButton(text=btn_text, callback_data=f"select_dogemon_menu|{pokemon_name}|{game.game_id}|{change_first_move}")
+        return InlineKeyboardButton(text=btn_text,
+                                    callback_data=f"select_dogemon_menu|{pokemon_name}|{game.game_id}|{change_first_move}")
 
     player, opponent = game.get_attacker_defencer()
 

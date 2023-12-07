@@ -238,8 +238,6 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
     await process_end_game(call, state, game, win_type='flee')
 
 
-
-
 @router.callback_query(Text(startswith='timeout|'))
 async def timeout(call: types.CallbackQuery, state: FSMContext):
     flood_limit = (await state.get_data()).get('flood_limit')
@@ -258,6 +256,15 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
         await process_end_game(call, state, game, win_type='timeout')
 
     await call.answer()
+
+
+@router.callback_query(Text(startswith='cancel_battle'))
+async def cancel_battle(call: types.CallbackQuery, state: FSMContext):
+    _, who_started = call.data.split('|')
+    if call.from_user.id != int(who_started):
+        return await call.answer("It's not your msg!")
+
+    await call.message.delete()
 
 
 async def process_end_game(call, state, game, win_type):
