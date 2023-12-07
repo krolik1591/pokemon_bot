@@ -7,6 +7,7 @@ from bot.models.spell import Spell
 @dataclass
 class PokemonBase:
     name: str
+    url: str
     hp: int
     lvl: int
     type: PokemonType

@@ -30,6 +30,10 @@ class Pokemon:
     def type(self):
         return self.base_pokemon.type
 
+    @property
+    def url(self):
+        return self.base_pokemon.url
+
     def set_shield(self):
         if self.shield:
             raise Exception("Already have shield")
@@ -63,7 +67,7 @@ class Pokemon:
             hp=mongo_data["hp"],
             spells=_spells_from_remaining_count(base_pokemon, mongo_data["spells_remaining_count"]),
             shield=mongo_data["shield"],
-            increase_dmg_by_card=mongo_data["increase_dmg_by_card"]
+            increase_dmg_by_card=mongo_data["increase_dmg_by_card"],
         )
 
     def to_mongo(self):
@@ -72,7 +76,7 @@ class Pokemon:
             'hp': self.hp,
             'spells_remaining_count': _spells_to_remaining_count(self.spells),
             "shield": self.shield,
-            "increase_dmg_by_card": self.increase_dmg_by_card
+            "increase_dmg_by_card": self.increase_dmg_by_card,
         }
 
 
