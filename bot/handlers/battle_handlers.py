@@ -273,13 +273,13 @@ async def process_end_game(call, state, game, win_type):
 
     if win_type == 'flee':
         winner, looser = game.game_over_coz_flee(call.from_user.id)
-        text = f'{winner.mention} won {reward} {winner.pokemon.name} while {looser.mention} fled the battle'
+        text = f'{winner.mention} won {reward} $POKECARD while {looser.mention} fled the battle'
     elif win_type == 'clear':
         looser, winner = game.get_attacker_defencer()
-        text = f'{winner.mention} won {reward} {winner.pokemon.name}. {looser.mention} has no pokemons left'
+        text = f'{winner.mention} won {reward} $POKECARD. {looser.mention} has no pokemons left'
     elif win_type == 'timeout':
         winner, looser = game.is_game_over_coz_timeout()
-        text = f'{winner.mention} won {reward} while {looser.mention} was inactive'
+        text = f'{winner.mention} won {reward} $POKECARD while {looser.mention} was inactive'
     else:
         raise ValueError(f'Unknown loose_type: {win_type}')
 
