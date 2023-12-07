@@ -147,7 +147,7 @@ def _timeout_btn(game_id):
 
 
 def _flee_btn(game_id):
-    return InlineKeyboardButton(text='🏳️ Flee', callback_data=f"flee|{game_id}")
+    return InlineKeyboardButton(text='🏳️ Flee', callback_data=f"fight_menu|flee|{game_id}")
 
 
 def _pokemon_text(player: Player):

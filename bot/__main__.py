@@ -4,6 +4,7 @@ import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.methods import DeleteWebhook
 
 from bot.db.first_start import mongo_first_start
 from bot.handlers import routers
@@ -11,6 +12,8 @@ from bot.utils.config_reader import config
 
 
 async def main(bot, dp):
+    await bot.delete_webhook(drop_pending_updates=True)
+
     logging.basicConfig(level=logging.WARNING)
 
     for router in routers:

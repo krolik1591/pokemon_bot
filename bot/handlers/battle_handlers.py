@@ -153,15 +153,16 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
 
     if action == 'attack':
         kb = select_attack_menu(game)
-        await try_to_edit_reply_markup(call, state, kb)
-        return
+        return await try_to_edit_reply_markup(call, state, kb)
 
     if action == 'special_cards':
         if not game.get_attacker().special_card:
             return await call.answer('You have no special cards!')
         kb = special_cards_menu(game)
-        await try_to_edit_reply_markup(call, state, kb)
-        return
+        return await try_to_edit_reply_markup(call, state, kb)
+
+    if action == 'flee':
+        return await process_end_game(call, state, game, win_type='flee')
 
 
 @router.callback_query(Text(startswith='fight|'))
@@ -223,19 +224,19 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     await try_to_edit_caption(call, state, text, kb)
 
 
-@router.callback_query(Text(startswith='flee|'))
-async def timeout(call: types.CallbackQuery, state: FSMContext):
-    flood_limit = (await state.get_data()).get('flood_limit')
-    if flood_limit:
-        return await call.answer(f'Wait {int(flood_limit - time.time())} seconds!!!')
-
-    _, game_id = call.data.split('|')
-    game = await game_service.get_game(game_id)
-
-    if call.from_user.id not in [game.player1.id, game.player2.id]:
-        return await call.answer('Only players can use this btn')
-
-    await process_end_game(call, state, game, win_type='flee')
+# @router.callback_query(Text(startswith='flee|'))
+# async def timeout(call: types.CallbackQuery, state: FSMContext):
+#     flood_limit = (await state.get_data()).get('flood_limit')
+#     if flood_limit:
+#         return await call.answer(f'Wait {int(flood_limit - time.time())} seconds!!!')
+#
+#     _, game_id = call.data.split('|')
+#     game = await game_service.get_game(game_id)
+#
+#     if call.from_user.id not in [game.player1.id, game.player2.id]:
+#         return await call.answer('Only players can use this btn')
+#
+#     await process_end_game(call, state, game, win_type='flee')
 
 
 @router.callback_query(Text(startswith='timeout|'))
@@ -325,7 +326,7 @@ async def try_to_edit_reply_markup(call, state, kb):
 async def kick_user(state, chat_id, looser, winner):
     try:
         await state.bot.ban_chat_member(chat_id, looser.id)
-        await state.bot.unban_chat_member(chat_id, looser.id)
+        # await state.bot.unban_chat_member(chat_id, looser.id)
         await db.increase_exclusive_win(winner)
 
         await state.bot.send_message(chat_id, f'User {looser.mention} lost and was kicked!')
