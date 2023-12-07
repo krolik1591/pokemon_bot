@@ -24,7 +24,7 @@ def waiting_battle_menu(user: User, bet):
 
 def select_dogemon_menu(game, first_move=False, latest_actions=None, change_first_move=False):
     def _pokemon_btn(pokemon_name):
-        btn_text = _pokemon_text_small(DOGEMONS_MAP[pokemon_name])
+        btn_text = _pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=True)
         return InlineKeyboardButton(text=btn_text, callback_data=f"select_dogemon_menu|{pokemon_name}|{game.game_id}|{change_first_move}")
 
     player, opponent = game.get_attacker_defencer()
@@ -123,7 +123,7 @@ def revive_pokemon_menu(game: Game, pokemons_to_revive):
     text = 'Select pokemon to revive:'
 
     revive_btns = [
-        InlineKeyboardButton(text=_pokemon_text_small(DOGEMONS_MAP[pokemon_name]),
+        InlineKeyboardButton(text=_pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=False),
                              callback_data=f"fight|True|{pokemon_name}|{game.game_id}")
         for pokemon_name in pokemons_to_revive
     ]
@@ -149,16 +149,18 @@ def _flee_btn(game_id):
 
 def _pokemon_text(player: Player):
     pokemon = player.pokemon
+    link = f"<a href='{pokemon.url}'>{pokemon.name}</a>"
     shield_icon = "🛡" if pokemon.shield else ""
     sleeping_pills_icon = "💤" if player.sleeping_pills_counter is not None else ""
     power_increase_icon = "🔥" if pokemon.increase_dmg_by_card else ""
 
-    return f"<b>Lvl. {pokemon.lvl} <i>{pokemon.name} {TYPES_STR[pokemon.type]} - {player.mention}</i></b>\n" \
+    return f"<b>Lvl. {pokemon.lvl} {link} {TYPES_STR[pokemon.type]} - {player.mention}</b>\n" \
            f"{hp_bar(pokemon.hp, pokemon.max_hp)} {power_increase_icon} {shield_icon} {sleeping_pills_icon}"
 
 
-def _pokemon_text_small(pokemon):
-    return f"Lvl {pokemon.lvl} {pokemon.name} {TYPES_STR[pokemon.type]}"
+def _pokemon_text_small(pokemon, is_link=False):
+    link = f"<a href='{pokemon.url}'>{pokemon.name}</a>" if not is_link else pokemon.name
+    return f"Lvl {pokemon.lvl} {link} {TYPES_STR[pokemon.type]}"
 
 
 def _actions_text(actions: [str]):

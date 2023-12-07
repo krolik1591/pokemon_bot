@@ -28,8 +28,6 @@ async def fun_battle(message: types.Message):
     text, kb = battle.waiting_battle_menu(message.from_user, None)
     image_bytes = get_image_bytes('image1.jpg')
 
-    await message.answer(text="<a href='https://t.me/pokecardsitems/57/'>Pok</a>")
-
     await message.answer_photo(
         photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
         caption=text,
