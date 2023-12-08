@@ -19,20 +19,20 @@ from bot.models.player import Player
 router = Router()
 
 
-@router.message(F.chat.type != "private", Command("battle_fun"))
-async def fun_battle(message: types.Message):
-    err = await pre_game_check(message.from_user.id, None, without_bets=True)
-    if err:
-        return await message.answer(err)
+# @router.message(F.chat.type != "private", Command("battle_fun"))
+# async def fun_battle(message: types.Message):
+#     err = await pre_game_check(message.from_user.id, None, without_bets=True)
+#     if err:
+#         return await message.answer(err)
 
-    text, kb = battle.waiting_battle_menu(message.from_user, None)
-    image_bytes = get_image_bytes('image1.jpg')
+#     text, kb = battle.waiting_battle_menu(message.from_user, None)
+#     image_bytes = get_image_bytes('image1.jpg')
 
-    await message.answer_photo(
-        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
-        caption=text,
-        reply_markup=kb
-    )
+#     await message.answer_photo(
+#         photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
+#         caption=text,
+#         reply_markup=kb
+#     )
 
 
 @router.message(F.chat.type != "private", Text(startswith="/battle "))

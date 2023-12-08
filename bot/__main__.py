@@ -35,10 +35,6 @@ async def set_bot_commands(bot: Bot):
         types.BotCommand(command="start", description="Pokemon menu "),
     ], scope=types.BotCommandScopeAllPrivateChats())
 
-    await bot.set_my_commands(commands=[
-        types.BotCommand(command="battle_fun", description="Start battle"),
-    ], scope=types.BotCommandScopeAllGroupChats())
-
 
 if __name__ == '__main__':
     if config.fsm_mode == "redis":

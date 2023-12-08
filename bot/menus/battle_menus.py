@@ -68,7 +68,7 @@ def battle_menu(game: Game, latest_actions=None):
         ],
         [
             InlineKeyboardButton(text='⚔ Attack', callback_data=f"fight_menu|attack|{game.game_id}"),
-            InlineKeyboardButton(text='☄️ Special Card.', callback_data=f"fight_menu|special_cards|{game.game_id}"),
+            InlineKeyboardButton(text='🎒 PokéBag', callback_data=f"fight_menu|special_cards|{game.game_id}"),
         ],
         [
             _timeout_btn(game.game_id),
@@ -147,7 +147,7 @@ def _timeout_btn(game_id):
 
 
 def _flee_btn(game_id):
-    return InlineKeyboardButton(text='🏳️ Flee', callback_data=f"fight_menu|flee|{game_id}")
+    return InlineKeyboardButton(text='️🏃 Flee', callback_data=f"fight_menu|flee|{game_id}")
 
 
 def _pokemon_text(player: Player):
