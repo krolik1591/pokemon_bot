@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     mongo_connection_string: str
     fsm_mode: str
     redis: Optional[RedisDsn]
+    available_chat_ids: str
 
     @validator("fsm_mode")
     def fsm_type_check(cls, v):

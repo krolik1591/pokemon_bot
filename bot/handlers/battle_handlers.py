@@ -15,19 +15,24 @@ from bot.menus.battle_menus import battle_menu, revive_pokemon_menu, select_doge
 from bot.utils import game_service
 from bot.models.game import Game
 from bot.models.player import Player
+from bot.utils.config_reader import config
 
 router = Router()
 
 
 # @router.message(F.chat.type != "private", Command("battle_fun"))
 # async def fun_battle(message: types.Message):
+#     available_chats = config.available_chat_ids.split(',')
+#     if str(message.chat.id) not in available_chats:
+#         return
+#
 #     err = await pre_game_check(message.from_user.id, None, without_bets=True)
 #     if err:
 #         return await message.answer(err)
-
+#
 #     text, kb = battle.waiting_battle_menu(message.from_user, None)
 #     image_bytes = get_image_bytes('image1.jpg')
-
+#
 #     await message.answer_photo(
 #         photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
 #         caption=text,
@@ -37,6 +42,10 @@ router = Router()
 
 @router.message(F.chat.type != "private", Text(startswith="/battle "))
 async def money_battle(message: types.Message, state: FSMContext):
+    available_chats = config.available_chat_ids.split(',')
+    if str(message.chat.id) not in available_chats:
+        return
+
     try:
         bet = int(message.text.removeprefix('/battle '))
         if bet <= 0:
