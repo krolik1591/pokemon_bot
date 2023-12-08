@@ -224,21 +224,6 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     await try_to_edit_caption(call, state, text, kb)
 
 
-# @router.callback_query(Text(startswith='flee|'))
-# async def timeout(call: types.CallbackQuery, state: FSMContext):
-#     flood_limit = (await state.get_data()).get('flood_limit')
-#     if flood_limit:
-#         return await call.answer(f'Wait {int(flood_limit - time.time())} seconds!!!')
-#
-#     _, game_id = call.data.split('|')
-#     game = await game_service.get_game(game_id)
-#
-#     if call.from_user.id not in [game.player1.id, game.player2.id]:
-#         return await call.answer('Only players can use this btn')
-#
-#     await process_end_game(call, state, game, win_type='flee')
-
-
 @router.callback_query(Text(startswith='timeout|'))
 async def timeout(call: types.CallbackQuery, state: FSMContext):
     flood_limit = (await state.get_data()).get('flood_limit')
