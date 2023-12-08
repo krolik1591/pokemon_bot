@@ -42,6 +42,7 @@ router = Router()
 
 @router.message(F.chat.type != "private", Text(startswith="/battle "))
 async def money_battle(message: types.Message, state: FSMContext):
+    print("start battle")
     available_chats = config.available_chat_ids.split(',')
     if str(message.chat.id) not in available_chats:
         return
@@ -271,7 +272,7 @@ async def process_end_game(call, state, game, win_type):
         text = f'{winner.mention} won {reward} $POKECARD while {looser.mention} fled the battle'
     elif win_type == 'clear':
         looser, winner = game.get_attacker_defencer()
-        text = f'{winner.mention} won {reward} $POKECARD. {looser.mention} has no pokemons left'
+        text = f'{winner.mention} won {reward} $POKECARD. {looser.mention} has no PokéCards left'
     elif win_type == 'timeout':
         winner, looser = game.is_game_over_coz_timeout()
         text = f'{winner.mention} won {reward} $POKECARD while {looser.mention} was inactive'
