@@ -122,7 +122,7 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
     game = await game_service.get_game(game_id)
 
     if not game.is_player_attacks_now(call.from_user.id):
-        return await call.answer('You cannot select dogemon now!')
+        return await call.answer('You cannot select PokéCards now!')
 
     # need to working `BACK` button
     if pokemon != 'None':

@@ -33,8 +33,8 @@ def select_dogemon_menu(game, first_move=False, latest_actions=None, change_firs
     player, opponent = game.get_attacker_defencer()
 
     actions_text = _actions_text(latest_actions)
-    select_pok_text = f'The first move is yours, {player.mention}, choose your dogeMON!' \
-        if first_move else f'{player.mention} choose your dogeMON!'
+    select_pok_text = f'The first move is yours, {player.mention}, choose your PokéCard!' \
+        if first_move else f'{player.mention} choose your PokéCard!'
     opponents_pokemon = f"🔶{opponent.name} plays as: {_pokemon_text_small(opponent.pokemon)}\n" if opponent.pokemon else ""
 
     text = f"{actions_text}\n\n{opponents_pokemon}\n{select_pok_text}"
