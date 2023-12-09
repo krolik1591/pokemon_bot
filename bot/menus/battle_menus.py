@@ -126,7 +126,7 @@ def revive_pokemon_menu(game: Game, pokemons_to_revive):
     text = 'Select pokemon to revive:'
 
     revive_btns = [
-        InlineKeyboardButton(text=_pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=False),
+        InlineKeyboardButton(text=_pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=True),
                              callback_data=f"fight|True|{pokemon_name}|{game.game_id}")
         for pokemon_name in pokemons_to_revive
     ]
