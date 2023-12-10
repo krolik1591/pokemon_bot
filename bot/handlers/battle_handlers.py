@@ -283,7 +283,7 @@ async def process_end_game(call, state, game, win_type):
     await end_game(winner.id, game)
 
     # if bot is admin
-    await kick_user(state, call.message.chat.id, looser, winner)
+    await kick_user(state, call.message.chat.id, looser, winner.id)
 
 
 async def try_to_edit_caption(call, state, text, kb):
