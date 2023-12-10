@@ -283,7 +283,7 @@ async def process_end_game(call, state, game, win_type):
     await end_game(winner.id, game)
 
     # if bot is admin
-    await kick_user(state, call.message.chat.id, looser, winner.id)
+    await kick_user(state, call.message.chat.id, looser, winner)
 
 
 async def try_to_edit_caption(call, state, text, kb):
@@ -322,7 +322,7 @@ async def kick_user(state, chat_id, looser, winner):
     try:
         await state.bot.ban_chat_member(chat_id, looser.id)
         # await state.bot.unban_chat_member(chat_id, looser.id)
-        await db.increase_exclusive_win(winner)
+        await db.increase_exclusive_win(winner.id)
 
         await state.bot.send_message(chat_id, f'User {looser.mention} lost and was kicked!')
     except exceptions.TelegramBadRequest:
