@@ -20,8 +20,20 @@ from bot.utils.config_reader import config
 router = Router()
 
 
-# @router.message(F.chat.type != "private", Command("battle_fun"))
+# @router.message(F.chat.type != "private", Command("hi"))
 # async def fun_battle(message: types.Message):
+#     winners = await db.get_exclusive_winners()
+#     print(winners)
+
+#     formatted_winners = []
+#     for winner in winners:
+#         name = winner['name']
+#         wins = winner['wins']
+#         username = winner['username']
+#         link = f"https://t.me/{username}"
+#         formatted_winners.append(f'<a href="{link}">{name}</a> - {wins}')
+
+#     await message.answer('<b>Exclusive Winners</b>\n\n' + '\n'.join(formatted_winners), disable_web_page_preview=True, parse_mode="HTML")
 #     available_chats = config.available_chat_ids.split(',')
 #     if str(message.chat.id) not in available_chats:
 #         return
@@ -324,6 +336,18 @@ async def kick_user(state, chat_id, looser, winner):
         # await state.bot.unban_chat_member(chat_id, looser.id)
         await db.increase_exclusive_win(winner.id)
 
+        main_chat = config.available_chat_ids.split(',')
+        winners = await db.get_exclusive_winners()
+
+        formatted_winners = []
+        for winner in winners:
+            name = winner['name']
+            wins = winner['wins']
+            username = winner['username']
+            link = f"https://t.me/{username}"
+            formatted_winners.append(f'<a href="{link}">{name}</a> - {wins}')
+
+        await state.bot.send_message(int(main_chat[0]),'<b>Exclusive Winners</b>\n\n' + '\n'.join(formatted_winners), disable_web_page_preview=True, parse_mode="HTML")
         await state.bot.send_message(chat_id, f'User {looser.mention} lost and was kicked!')
     except exceptions.TelegramBadRequest:
         print('Im not a admin!')

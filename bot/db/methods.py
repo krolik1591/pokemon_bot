@@ -34,9 +34,15 @@ async def update_game(game_id, game_info):
             '$set': game_info
         }
     )
-
+import pymongo
 
 # REWORK IT
+async def get_exclusive_winners(): 
+    docs = mongodb['winners'].find().sort("wins", pymongo.DESCENDING).limit(10)
+    winners = []
+    async for doc in docs: 
+        winners.append(doc)
+    return winners
 
 async def get_user_balance(tg_userid):
     user = await mongodb['users'].find_one({ "tg_userid": tg_userid})
