@@ -36,7 +36,7 @@ async def my_games(message: types.Message):
     await message.answer(f"{mention} games: \n{', '.join(game_ids)}")
 
 
-@router.message(F.chat.type != "private", Command("cancel_games"))
+@router.message(F.chat.type != "private", Command("cancel"))
 async def cancel_games(message: types.Message, state: FSMContext):
     active_games = await db.get_active_games(message.from_user.id)
     if not active_games:
