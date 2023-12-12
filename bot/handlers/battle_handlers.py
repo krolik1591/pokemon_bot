@@ -55,9 +55,9 @@ router = Router()
 @router.message(F.chat.type != "private", Text(startswith="/battle "))
 async def money_battle(message: types.Message, state: FSMContext):
     print("start battle")
-    available_chats = config.available_chat_ids.split(',')
-    if str(message.chat.id) not in available_chats:
-        return
+    # available_chats = config.available_chat_ids.split(',')
+    # if str(message.chat.id) not in available_chats:
+    #     return
 
     try:
         bet = int(message.text.removeprefix('/battle '))
@@ -66,7 +66,7 @@ async def money_battle(message: types.Message, state: FSMContext):
     except ValueError:
         return await message.answer('Bet must be integer and bigger than 0!')
 
-    err = await pre_game_check(message.from_user.id, int(bet))
+    err = await pre_game_check(message.from_user, int(bet))
     if err:
         return await message.answer(err)
 
@@ -90,7 +90,7 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
         return await call.answer('You cannot battle with yourself!')
 
     bet = int(bet) if bet != 'None' else None
-    err = await pre_game_check(call.from_user.id, bet)
+    err = await pre_game_check(call.from_user, bet)
     if err:
         return await call.answer(err)
 
@@ -276,7 +276,7 @@ async def cancel_battle(call: types.CallbackQuery, state: FSMContext):
 
 
 async def process_end_game(call, state, game, win_type):
-    db_game = await db.get_active_game(call.from_user.id)
+    db_game = await db.get_game(game.game_id)
     reward = db_game['bet'] * 2 if db_game['bet'] else 0
 
     if win_type == 'flee':

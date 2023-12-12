@@ -1,16 +1,23 @@
+from aiogram.utils import markdown
+from aiogram.utils.link import create_tg_link
+
+from bot.data.const import MAX_ACTIVE_GAMES
 from bot.db import methods as db
 from bot.models.game import Game
 
 
-async def pre_game_check(player_id, bet, without_bets=False):
-    active_game = await db.get_active_game(player_id)
-    if active_game:
-        return f'You are already in game!'
+async def pre_game_check(player, bet, without_bets=False):
+    active_games = await db.get_active_games(player.id)
+    if len(active_games) >= MAX_ACTIVE_GAMES:
+        game_ids = [f"<code>{str(game['_id'])}</code>" for game in active_games]
+        return f'{player.mention} have {len(active_games)} games.\n' \
+               f'Game ids: \n{", ".join(game_ids)}\n\n' \
+               f'Maximum active games: {MAX_ACTIVE_GAMES}\n\n'
 
     if without_bets or bet is None:
         return None
 
-    user1_balance = await db.get_user_balance(player_id)
+    user1_balance = await db.get_user_balance(player.id)
     if user1_balance < bet:
         return f'You have no money to bet!'
 

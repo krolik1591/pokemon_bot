@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from bson import ObjectId
 from datetime import datetime
 
@@ -58,15 +60,23 @@ async def get_user_balance(tg_userid):
     return balance if balance is not None else 0
 
 
-async def get_active_game(tg_userid):
+async def get_game(game_id_obj):
+    game_id_obj = ObjectId(game_id_obj)
     game = await mongodb['games'].find_one({
+        '_id': game_id_obj
+    })
+    return game
+
+
+async def get_active_games(tg_userid):
+    game = await mongodb['games'].find({
         '$or': [
             {'player1.id': tg_userid},
             {'player2.id': tg_userid}
         ],
         'winner': None
     },
-        sort=[('creation_time', -1)])
+        sort=[('creation_time', -1)]).to_list(length=None)
     return game
 
 
@@ -82,6 +92,7 @@ async def update_user_balance(tg_userid, balance_to_add):
         }
     )
 
+
 async def deposit_tokens(tg_userid, amount, game_id = str(10000)):
     new_deposit = { 'txnHash': game_id, 'value': amount, 'time':  datetime.now()}
     await mongodb['users'].update_one(
@@ -94,6 +105,7 @@ async def deposit_tokens(tg_userid, amount, game_id = str(10000)):
             }
         }
     )
+
 
 async def deposit_burn(amount): 
     new_deposit = { 'txnHash': "10000", 'value': amount, 'time': datetime.now()}
@@ -108,6 +120,7 @@ async def deposit_burn(amount):
         }
     )
 
+
 async def withdraw_tokens(tg_userid, amount, game_id = str(10000)):
     new_withdraw = { 'txnHash': game_id, 'value': amount, 'time':  datetime.now()}
     await mongodb['users'].update_one(
@@ -120,6 +133,7 @@ async def withdraw_tokens(tg_userid, amount, game_id = str(10000)):
             }
         }
     )
+
 
 async def increase_exclusive_win(tg_userid): 
     user = await mongodb['winners'].find_one({
@@ -153,11 +167,10 @@ async def increase_exclusive_win(tg_userid):
 if __name__ == '__main__':
     import asyncio
 
-
     async def main():
         # x = await get_active_game(357108179)
-        x = await get_active_game(357108179)
-        print(x)
+        x = await get_active_games(357108179)
+        pprint(str(x[0]['_id']))
 
 
     asyncio.run(main())
