@@ -8,7 +8,7 @@ from aiogram import F, Router, exceptions, types
 from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
 
-from bot.data.const import REWARD
+from bot.data.const import REWARD, PRIZE_POOL
 from bot.db import db
 from bot.handlers.REWORK_IT import pre_game_check, end_game, take_money_from_players
 from bot.menus import battle
@@ -279,11 +279,13 @@ async def cancel_battle(call: types.CallbackQuery, state: FSMContext):
 
 async def process_end_game(call, state, game, win_type):
     db_game = await db.get_game(game.game_id)
-    reward = math.floor(db_game['bet'] * 2 * REWARD) if db_game['bet'] else 0
+    pool = db_game['bet'] * 2 if db_game['bet'] else 0
+    reward = math.floor(pool * REWARD)
+    burnt = math.floor(pool * PRIZE_POOL)
 
     if win_type == 'flee':
         winner, looser = game.game_over_coz_flee(call.from_user.id)
-        text = f'{winner.mention} won {reward} $POKECARD while {looser.mention} fled the battle and 1 will be burnt'
+        text = f'{winner.mention} won {reward} $POKECARD while {looser.mention} fled the battle and {burnt} will be burnt'
     elif win_type == 'clear':
         looser, winner = game.get_attacker_defencer()
         text = f'{winner.mention} won {reward} $POKECARD. {looser.mention} has no PokéCards left'
