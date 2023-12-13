@@ -1,7 +1,7 @@
 from aiogram.utils import markdown
 from aiogram.utils.link import create_tg_link
 
-from bot.data.const import MAX_ACTIVE_GAMES
+from bot.data.const import MAX_ACTIVE_GAMES, REWARD, PRIZE_POOL
 from bot.db import methods as db
 from bot.models.game import Game
 
@@ -34,8 +34,8 @@ async def end_game(winner_id, game: Game):
 
     if game.bet is None:
         return
-    for_winner = game.bet * 2 * 0.95
-    prize_pool = game.bet * 2 * 0.05
+    for_winner = game.bet * 2 * REWARD
+    prize_pool = game.bet * 2 * PRIZE_POOL
 
     await db.deposit_tokens(winner_id, for_winner)
     await db.deposit_burn(prize_pool)

@@ -7,6 +7,7 @@ from aiogram import F, Router, exceptions, types
 from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
 
+from bot.data.const import REWARD
 from bot.db import db
 from bot.handlers.REWORK_IT import pre_game_check, end_game, take_money_from_players
 from bot.menus import battle
@@ -277,7 +278,7 @@ async def cancel_battle(call: types.CallbackQuery, state: FSMContext):
 
 async def process_end_game(call, state, game, win_type):
     db_game = await db.get_game(game.game_id)
-    reward = db_game['bet'] * 2 if db_game['bet'] else 0
+    reward = db_game['bet'] * 2 * REWARD if db_game['bet'] else 0
 
     if win_type == 'flee':
         winner, looser = game.game_over_coz_flee(call.from_user.id)

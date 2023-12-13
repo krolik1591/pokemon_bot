@@ -9,6 +9,9 @@ ADDITION_DMG_BY_POKEMON_TYPE = (3, 8)  # how many dmg will increase by pokemon t
 
 MAX_ACTIVE_GAMES = 5
 
+REWARD = 0.95
+PRIZE_POOL = 0.05
+
 # name special cards
 # TURBO_BONUS card name is in bot/data/special_cards.py
 POISON = "❤️‍🔥 Potion"
