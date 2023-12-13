@@ -186,8 +186,7 @@ if __name__ == '__main__':
     async def main():
         # x = await get_active_game(357108179)
         # await lower_item(357108179, 'potion')
-        x = await find(357108179)
-        pprint(x['items'])
+        x = await add_new_special(815040834)
 
 
     asyncio.run(main())

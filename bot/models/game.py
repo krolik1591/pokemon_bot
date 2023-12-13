@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from bot.data import const
-from bot.data.const import PURCHASE_SPECIAL_EMOJI
+from bot.data.const import IS_DONATE_SPECIAL, REVIVE
 from bot.models.player import Player
 from bot.models.pokemon_types import WEAKNESS
 from bot.models.spell import Spell
@@ -30,11 +30,35 @@ class Game:
     def select_pokemon(self, pokemon_name):
         self.get_attacker().select_pokemon(pokemon_name)
 
+    async def revive_pokemon(self, pokemon_name):
+        attacker, defender = self.get_attacker_defencer()
+
+        if pokemon_name.endswith(IS_DONATE_SPECIAL):
+            pokemon_name = pokemon_name.removesuffix(IS_DONATE_SPECIAL)
+
+            available_donate_cards = await self.db_service.get_purchased_cards(attacker.id)
+            if REVIVE not in available_donate_cards:
+                raise Exception("Don't have this special card")
+
+            attacker.update_used_purchased_special_cards(REVIVE)
+            await self.db_service.subtract_special_card(attacker.id, REVIVE)
+        else:
+            attacker.special_cards.remove(REVIVE)
+
+        actions = []
+
+        if pokemon_name in attacker.get_pokemons_to_revive():
+            attacker.revive_pokemon(pokemon_name)
+            actions.append(f"{attacker.mention} revived {pokemon_name}")
+
+        attacker.uses_of_special_cards += 1
+        return actions
+
     async def use_special_card(self, special_card: str):
         attacker, defender = self.get_attacker_defencer()
 
-        if special_card.endswith(PURCHASE_SPECIAL_EMOJI):
-            special_card = special_card.removesuffix(PURCHASE_SPECIAL_EMOJI)
+        if special_card.endswith(IS_DONATE_SPECIAL):
+            special_card = special_card.removesuffix(IS_DONATE_SPECIAL)
 
             available_donate_cards = await self.db_service.get_purchased_cards(attacker.id)
             if special_card not in available_donate_cards:
@@ -47,11 +71,7 @@ class Game:
 
         actions = []
 
-        if special_card in attacker.get_pokemons_to_revive():
-            attacker.revive_pokemon(special_card)
-            actions.append(f"{attacker.mention} revived {special_card}")
-
-        elif special_card == const.POTION:
+        if special_card == const.POTION:
             heal_amount = attacker.use_poison()
             actions.append(f"{attacker.mention} use potion and restored {math.floor(heal_amount)} hp")
 

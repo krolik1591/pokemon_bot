@@ -8,7 +8,7 @@ from aiogram import F, Router, exceptions, types
 from aiogram.filters import Text
 from aiogram.fsm.context import FSMContext
 
-from bot.data.const import REWARD, PRIZE_POOL, MAX_USES_OF_SPECIAL_CARDS, PURCHASE_SPECIAL_EMOJI
+from bot.data.const import REWARD, PRIZE_POOL, MAX_USES_OF_SPECIAL_CARDS, IS_DONATE_SPECIAL
 from bot.db import db
 from bot.REWORK_IT import pre_game_check, end_game, take_money_from_players
 from bot.menus import battle
@@ -205,7 +205,7 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     if flood_limit:
         return await call.answer(f'Wait {int(flood_limit - time.time())} seconds!!!')
 
-    _, is_special, item_name, game_id = call.data.split('|')
+    _, is_special, item_name, game_id, is_revive = call.data.split('|')
 
     game = await game_service.get_game(game_id)
 
@@ -213,8 +213,11 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
         return await call.answer('Not your turn!')
 
     try:
-        if is_special == "True":
-            actions = await game.use_special_card(item_name)
+        if is_special == "T":
+            if is_revive == "T":
+                actions = await game.revive_pokemon(item_name)
+            else:
+                actions = await game.use_special_card(item_name)
         else:
             actions = game.cast_spell(item_name)
             game.end_move()
@@ -250,7 +253,7 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     game = await game_service.get_game(game_id)
 
     is_donate = False
-    if action.endswith(PURCHASE_SPECIAL_EMOJI):
+    if action.endswith(IS_DONATE_SPECIAL):
         is_donate = True
 
     pokemons_to_revive = game.get_attacker().get_pokemons_to_revive()
