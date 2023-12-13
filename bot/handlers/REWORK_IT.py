@@ -19,7 +19,7 @@ async def pre_game_check(player, bet, without_bets=False):
 
     user1_balance = await db.get_user_balance(player.id)
     if user1_balance < bet:
-        return f'You have no money to bet!'
+        return f"Sorry you don't have tokens to start a battle!"
 
     return None
 
