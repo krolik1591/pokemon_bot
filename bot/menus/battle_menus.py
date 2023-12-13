@@ -1,5 +1,3 @@
-from pprint import pprint
-
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, User
 
 from bot.data.const import REVIVE, IS_DONATE_SPECIAL
@@ -119,7 +117,7 @@ async def special_cards_menu(game: Game):
         else:
             # ... is_special ..... is_revive
             callback_data = f"fight|T|{player.special_cards[0]}|{game.game_id}|F"
-        print(callback_data)
+
         special_btns.append(_special_btn(player.special_cards[0], callback_data))
 
     for index, special_card in enumerate(donate_cards):
