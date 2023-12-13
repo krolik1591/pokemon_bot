@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, User
 
 from bot.data.const import REVIVE
@@ -104,15 +106,19 @@ def select_attack_menu(game: Game):
 def special_cards_menu(game: Game):
     player = game.get_attacker()
 
-    if player.special_card == REVIVE:
-        callback_data = f"revive_pokemon|{game.game_id}"
-    else:
-        callback_data = f"fight|True|{player.special_card}|{game.game_id}"
+    special_btns = []
+    for index, special_card in enumerate(player.special_cards):
+        text = special_card if index == 0 else special_card + ' 💵'
+
+        if special_card == REVIVE:
+            callback_data = f"revive_pokemon|{game.game_id}"
+        else:
+            callback_data = f"fight|True|{special_card}|{game.game_id}"
+
+        special_btns.append(_special_btn(text, callback_data))
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text=f'{player.special_card}', callback_data=callback_data),
-        ],
+        *special_btns,
         [
             InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon_menu|None|{game.game_id}|False"),
             _timeout_btn(game.game_id),
@@ -140,6 +146,10 @@ def revive_pokemon_menu(game: Game, pokemons_to_revive):
     ])
 
     return text, kb
+
+
+def _special_btn(text, callback_data):
+    return [InlineKeyboardButton(text=text, callback_data=callback_data)]
 
 
 def _timeout_btn(game_id):

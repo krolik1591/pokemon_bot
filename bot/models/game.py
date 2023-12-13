@@ -1,3 +1,4 @@
+import math
 import random
 import time
 from dataclasses import dataclass
@@ -24,40 +25,30 @@ class Game:
     def select_pokemon(self, pokemon_name):
         self.get_attacker().select_pokemon(pokemon_name)
 
-    def use_special_card(self, pokemon_name=None):
+    def use_special_card(self, special_card=None):
         attacker, defender = self.get_attacker_defencer()
-        card_name = attacker.special_card
 
         actions = []
-        x = [card for card in SPECIAL_CARDS if card.endswith("-turbo")]
 
-        if card_name == const.REVIVE:
-            self.get_attacker().revive_pokemon(pokemon_name)
-            actions.append(f"{self.get_attacker().mention} revived {pokemon_name}")
+        if special_card in attacker.get_pokemons_to_revive():
+            attacker.revive_pokemon(special_card)
+            actions.append(f"{attacker.mention} revived {special_card}")
 
-        elif card_name == const.POISON:
+        elif special_card == const.POTION:
             heal_amount = attacker.use_poison()
-            actions.append(f"{attacker.mention} use potion and restored {heal_amount} hp")
+            actions.append(f"{attacker.mention} use potion and restored {math.floor(heal_amount)} hp")
 
-        elif card_name == const.SLEEPING_PILLS:
+        elif special_card == const.SLEEPING_PILLS:
             defender.set_sleeping_pills()
             actions.append(f"{attacker.mention} use sleeping pills! "
                            f"{defender.mention} next {const.SLEEPING_COUNTER} attack(s) will be cancelled")
 
-        elif card_name.endswith("-turbo"):
-            turbo_type = card_name[2:].removesuffix("-turbo")
-            if attacker.pokemon.type.value == turbo_type:
-                attacker.pokemon.increase_dmg_by_card = True
-                actions.append(f"{attacker.mention} use turbo {card_name} card! "
-                               f"Attack dmg will be increased by {const.ADDITION_DMG_BY_CARD} until pokemon is alive")
-            else:
-                actions.append(f"{attacker.mention} use turbo {card_name} card! "
-                               f"But his pokemon is {attacker.pokemon.type.value} type. So nothing happens")
-
         else:
             raise Exception("Unknown special card")
 
-        self.get_attacker().special_card = None
+        attacker.special_cards.remove(special_card)
+        attacker.uses_of_special_cards += 1
+
         return actions
 
     # returns list of actions

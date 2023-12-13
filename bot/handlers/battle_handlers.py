@@ -8,7 +8,7 @@ from aiogram import F, Router, exceptions, types
 from aiogram.filters import Command, Text
 from aiogram.fsm.context import FSMContext
 
-from bot.data.const import REWARD, PRIZE_POOL
+from bot.data.const import REWARD, PRIZE_POOL, MAX_USES_OF_SPECIAL_CARDS
 from bot.db import db
 from bot.handlers.REWORK_IT import pre_game_check, end_game, take_money_from_players
 from bot.menus import battle
@@ -180,7 +180,11 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
         return await try_to_edit_reply_markup(call, state, kb)
 
     if action == 'special_cards':
-        if not game.get_attacker().special_card:
+        attacker = game.get_attacker()
+        if attacker.uses_of_special_cards >= MAX_USES_OF_SPECIAL_CARDS:
+            return await call.answer(f'Maximum number of special cards used! ({MAX_USES_OF_SPECIAL_CARDS})')
+
+        if len(game.get_attacker().special_cards) == 0:
             return await call.answer('You have no special cards!')
         kb = special_cards_menu(game)
         return await try_to_edit_reply_markup(call, state, kb)
