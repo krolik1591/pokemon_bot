@@ -57,9 +57,9 @@ router = Router()
 @router.message(F.chat.type != "private", Text(startswith="/battle "))
 async def money_battle(message: types.Message, state: FSMContext):
     print("start battle")
-    # available_chats = config.available_chat_ids.split(',')
-    # if str(message.chat.id) not in available_chats:
-    #     return
+    available_chats = config.available_chat_ids.split(',')
+    if str(message.chat.id) not in available_chats:
+        return
 
     try:
         bet = int(message.text.removeprefix('/battle '))
