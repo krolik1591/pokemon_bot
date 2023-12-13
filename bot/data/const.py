@@ -7,6 +7,8 @@ REVIVE_HP = 0.3  # MAX_HP * REVIVE_HP
 
 MAX_USES_OF_SPECIAL_CARDS = 3  # how many times player can use special cards
 
+PURCHASE_SPECIAL_EMOJI = ' 💵'
+
 ADDITION_DMG_BY_POKEMON_TYPE = (3, 8)  # how many dmg will increase by pokemon type
 
 MAX_ACTIVE_GAMES = 5

@@ -5,7 +5,9 @@ from dataclasses import dataclass
 from typing import Optional
 
 from bot.data import const
+from bot.data.const import PURCHASE_SPECIAL_EMOJI
 from bot.data.special_cards import SPECIAL_CARDS
+from bot.handlers.REWORK_IT import subtract_special_card
 from bot.models.player import Player
 from bot.models.pokemon_types import PokemonType, WEAKNESS
 from bot.models.spell import Spell
@@ -27,6 +29,11 @@ class Game:
 
     def use_special_card(self, special_card=None):
         attacker, defender = self.get_attacker_defencer()
+
+        if special_card.endwith(PURCHASE_SPECIAL_EMOJI):
+            special_card = special_card.removeprefix(PURCHASE_SPECIAL_EMOJI)
+
+            await subtract_special_card(attacker.id, special_card)
 
         actions = []
 

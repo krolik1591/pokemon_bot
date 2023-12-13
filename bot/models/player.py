@@ -11,6 +11,7 @@ from bot.data import const
 from bot.data.const import REVIVE_HP, SLEEPING_COUNTER, POTION, REVIVE, SLEEPING_PILLS
 from bot.data.dogemons import DOGEMONS
 from bot.data.special_cards import SPECIAL_CARDS
+from bot.handlers.REWORK_IT import get_purchased_cards
 from bot.models.pokemon_types import PokemonType
 from bot.models.pokemon import Pokemon
 
@@ -130,7 +131,9 @@ def get_pokemons_pool():
 
 def get_special_cards():
     random_card = get_random_special()
-    purchase_cards = get_purchased_cards()
+    purchase_cards = await get_purchased_cards()
+    if purchase_cards is None:
+        return random_card
     return random_card + purchase_cards
 
 
@@ -139,6 +142,3 @@ def get_random_special():
     random.shuffle(special_cards)
     return [special_cards[0]]
 
-
-def get_purchased_cards():
-    return [POTION, REVIVE, SLEEPING_PILLS]

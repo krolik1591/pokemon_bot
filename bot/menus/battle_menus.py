@@ -2,7 +2,7 @@ from pprint import pprint
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, User
 
-from bot.data.const import REVIVE
+from bot.data.const import REVIVE, PURCHASE_SPECIAL_EMOJI
 from bot.data.dogemons import DOGEMONS_MAP
 from bot.models.game import Game
 from bot.models.player import Player
@@ -108,12 +108,12 @@ def special_cards_menu(game: Game):
 
     special_btns = []
     for index, special_card in enumerate(player.special_cards):
-        text = special_card if index == 0 else special_card + ' 💵'
+        text = special_card if index == 0 else special_card + PURCHASE_SPECIAL_EMOJI
 
         if special_card == REVIVE:
             callback_data = f"revive_pokemon|{game.game_id}"
         else:
-            callback_data = f"fight|True|{special_card}|{game.game_id}"
+            callback_data = f"fight|True|{special_card}{PURCHASE_SPECIAL_EMOJI}|{game.game_id}"
 
         special_btns.append(_special_btn(text, callback_data))
 

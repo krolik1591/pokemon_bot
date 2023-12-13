@@ -186,6 +186,7 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
 
         if len(game.get_attacker().special_cards) == 0:
             return await call.answer('You have no special cards!')
+
         kb = special_cards_menu(game)
         return await try_to_edit_reply_markup(call, state, kb)
 
