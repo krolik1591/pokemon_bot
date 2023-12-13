@@ -103,15 +103,28 @@ def select_attack_menu(game: Game):
     return kb
 
 
-def special_cards_menu(game: Game):
+async def special_cards_menu(game: Game):
     player = game.get_attacker()
 
+    available_donat_cards = await game.db_service.get_purchased_cards(player.id)
+    used_purchase_special = player.used_purchased_special_cards
+
+    donate_cards = [card for card in available_donat_cards if card not in used_purchase_special]
+
     special_btns = []
-    for index, special_card in enumerate(player.special_cards):
-        text = special_card if index == 0 else special_card + PURCHASE_SPECIAL_EMOJI
+    if len(player.special_cards) == 1:
+        if player.special_cards == REVIVE:
+            callback_data = f"revive_pokemon|{game.game_id}"
+        else:
+            callback_data = f"fight|True|{player.special_cards}|{game.game_id}"
+
+        special_btns.append(_special_btn(player.special_cards[0], callback_data))
+
+    for index, special_card in enumerate(donate_cards):
+        text = special_card + PURCHASE_SPECIAL_EMOJI
 
         if special_card == REVIVE:
-            callback_data = f"revive_pokemon|{game.game_id}"
+            callback_data = f"revive_pokemon{PURCHASE_SPECIAL_EMOJI}|{game.game_id}"
         else:
             callback_data = f"fight|True|{special_card}{PURCHASE_SPECIAL_EMOJI}|{game.game_id}"
 
@@ -128,14 +141,21 @@ def special_cards_menu(game: Game):
     return kb
 
 
-def revive_pokemon_menu(game: Game, pokemons_to_revive):
+def revive_pokemon_menu(game: Game, pokemons_to_revive, is_donate):
     text = 'Select pokemon to revive:'
 
-    revive_btns = [
-        InlineKeyboardButton(text=_pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=True),
-                             callback_data=f"fight|True|{pokemon_name}|{game.game_id}")
-        for pokemon_name in pokemons_to_revive
-    ]
+    if is_donate:
+        revive_btns = [
+            InlineKeyboardButton(text=_pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=True),
+                                 callback_data=f"fight|True|{pokemon_name}{PURCHASE_SPECIAL_EMOJI}|{game.game_id}")
+            for pokemon_name in pokemons_to_revive
+        ]
+    else:
+        revive_btns = [
+            InlineKeyboardButton(text=_pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=True),
+                                 callback_data=f"fight|True|{pokemon_name}|{game.game_id}")
+            for pokemon_name in pokemons_to_revive
+        ]
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
         revive_btns,

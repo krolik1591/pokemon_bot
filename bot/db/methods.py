@@ -164,13 +164,30 @@ async def increase_exclusive_win(tg_userid):
         )
 
 
+async def add_new_special(user_id):
+    special = {
+        'potion': 10,
+        'revive_pill': 10,
+        'sleeping_pill': 10,
+    }
+    await mongodb['users'].update_one({'tg_userid': user_id}, {'$set': {'items': special}})
+
+
+async def find(user_id):
+    return await mongodb['users'].find_one({'tg_userid': user_id})
+
+
+async def lower_item(user_id, item):
+    await mongodb['users'].update_one({'tg_userid': user_id}, {'$inc': {'items.' + item: -1}})
+
 if __name__ == '__main__':
     import asyncio
 
     async def main():
         # x = await get_active_game(357108179)
-        x = await get_active_games(357108179)
-        pprint(str(x[0]['_id']))
+        # await lower_item(357108179, 'potion')
+        x = await find(357108179)
+        pprint(x['items'])
 
 
     asyncio.run(main())

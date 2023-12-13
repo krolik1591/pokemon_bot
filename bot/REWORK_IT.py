@@ -39,13 +39,3 @@ async def end_game(winner_id, game: Game):
 
     await db.deposit_tokens(winner_id, for_winner)
     await db.deposit_burn(prize_pool)
-
-
-async def get_purchased_cards():
-    # return None or [const.POTION, const.REVIVE, const.SLEEPING_PILLS]
-    pass
-
-
-async def subtract_special_card(player_id: int, special_card_name: str):
-    # subtract the amount if special card in bd
-    pass

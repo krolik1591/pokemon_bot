@@ -6,11 +6,10 @@ from typing import Optional
 
 from bot.data import const
 from bot.data.const import PURCHASE_SPECIAL_EMOJI
-from bot.data.special_cards import SPECIAL_CARDS
-from bot.handlers.REWORK_IT import subtract_special_card
 from bot.models.player import Player
-from bot.models.pokemon_types import PokemonType, WEAKNESS
+from bot.models.pokemon_types import WEAKNESS
 from bot.models.spell import Spell
+from bot.utils.db_service import DbService
 
 
 @dataclass
@@ -18,6 +17,10 @@ class Game:
     player1: Player
     player2: Player
     bet: int
+    chat_id: int
+
+    db_service: DbService = DbService()
+
     game_id: Optional[str] = None
     is_player1_move: bool = True
 
@@ -27,13 +30,20 @@ class Game:
     def select_pokemon(self, pokemon_name):
         self.get_attacker().select_pokemon(pokemon_name)
 
-    def use_special_card(self, special_card=None):
+    async def use_special_card(self, special_card: str):
         attacker, defender = self.get_attacker_defencer()
 
-        if special_card.endwith(PURCHASE_SPECIAL_EMOJI):
-            special_card = special_card.removeprefix(PURCHASE_SPECIAL_EMOJI)
+        if special_card.endswith(PURCHASE_SPECIAL_EMOJI):
+            special_card = special_card.removesuffix(PURCHASE_SPECIAL_EMOJI)
 
-            await subtract_special_card(attacker.id, special_card)
+            available_donate_cards = await self.db_service.get_purchased_cards(attacker.id)
+            if special_card not in available_donate_cards:
+                raise Exception("Don't have this special card")
+
+            attacker.update_used_purchased_special_cards(special_card)
+            await self.db_service.subtract_special_card(attacker.id, special_card)
+        else:
+            attacker.special_cards.remove(special_card)
 
         actions = []
 
@@ -53,7 +63,6 @@ class Game:
         else:
             raise Exception("Unknown special card")
 
-        attacker.special_cards.remove(special_card)
         attacker.uses_of_special_cards += 1
 
         return actions
@@ -146,14 +155,16 @@ class Game:
         return bool(self.player1.pokemon and self.player2.pokemon)
 
     @classmethod
-    def new(cls, player1: Player, player2: Player, bet: Optional[int]):
+    def new(cls, player1: Player, player2: Player, bet: Optional[int], chat_id: int):
         return cls(
             player1=player1,
             player2=player2,
             bet=bet,
             is_player1_move=random.choice((True, False)),
             winner=None,
-            creation_time=time.time()
+            creation_time=time.time(),
+            chat_id=chat_id,
+            db_service=cls.db_service
         )
 
     @classmethod
@@ -165,7 +176,8 @@ class Game:
             is_player1_move=mongo_data['is_player1_move'],
             winner=mongo_data['winner'],
             creation_time=mongo_data['creation_time'],
-            bet=mongo_data['bet']
+            bet=mongo_data['bet'],
+            chat_id=mongo_data['chat_id'],
         )
 
     def to_mongo(self):
@@ -175,7 +187,8 @@ class Game:
             "is_player1_move": self.is_player1_move,
             "winner": self.winner,
             "creation_time": self.creation_time,
-            "bet": self.bet
+            "bet": self.bet,
+            "chat_id": self.chat_id,
         }
 
 
@@ -187,7 +200,5 @@ def _calc_dmg(spell: Spell, attack: Player, defence: Player):
 
     if attack.pokemon.type in WEAKNESS[defence.pokemon.type]:
         dmg += random.randint(*const.ADDITION_DMG_BY_POKEMON_TYPE)
-    # if defence.pokemon.type in WEAKNESS[attack.pokemon.type]:
-    #     dmg -= random.randint(3, 8)
 
     return dmg

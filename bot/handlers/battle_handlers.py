@@ -5,12 +5,12 @@ import time
 from pathlib import Path
 
 from aiogram import F, Router, exceptions, types
-from aiogram.filters import Command, Text
+from aiogram.filters import Text
 from aiogram.fsm.context import FSMContext
 
-from bot.data.const import REWARD, PRIZE_POOL, MAX_USES_OF_SPECIAL_CARDS
+from bot.data.const import REWARD, PRIZE_POOL, MAX_USES_OF_SPECIAL_CARDS, PURCHASE_SPECIAL_EMOJI
 from bot.db import db
-from bot.handlers.REWORK_IT import pre_game_check, end_game, take_money_from_players
+from bot.REWORK_IT import pre_game_check, end_game, take_money_from_players
 from bot.menus import battle
 from bot.menus.battle_menus import battle_menu, revive_pokemon_menu, select_dogemon_menu, select_attack_menu, \
     special_cards_menu
@@ -100,9 +100,10 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
         await take_money_from_players(player_1_id, call.from_user.id, bet)
 
     game = Game.new(
-        Player.new(await state.bot.get_chat(player_1_id)),
-        Player.new(call.from_user),
+        await Player.new(await state.bot.get_chat(player_1_id)),
+        await Player.new(call.from_user),
         bet=bet,
+        chat_id=call.message.chat.id
     )
 
     game = await game_service.save_game(game)
@@ -184,10 +185,14 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
         if attacker.uses_of_special_cards >= MAX_USES_OF_SPECIAL_CARDS:
             return await call.answer(f'Maximum number of special cards used! ({MAX_USES_OF_SPECIAL_CARDS})')
 
-        if len(game.get_attacker().special_cards) == 0:
+        available_donat_cards = await game.db_service.get_purchased_cards(attacker.id)
+        used_purchase_special = attacker.used_purchased_special_cards
+        donate_cards = [card for card in available_donat_cards if card not in used_purchase_special]
+
+        if len(attacker.special_cards) == 0 and len(donate_cards) == 0:
             return await call.answer('You have no special cards!')
 
-        kb = special_cards_menu(game)
+        kb = await special_cards_menu(game)
         return await try_to_edit_reply_markup(call, state, kb)
 
     if action == 'flee':
@@ -209,7 +214,7 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
 
     try:
         if is_special == "True":
-            actions = game.use_special_card(item_name)
+            actions = await game.use_special_card(item_name)
         else:
             actions = game.cast_spell(item_name)
             game.end_move()
@@ -235,21 +240,25 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     await try_to_edit_caption(call, state, text, kb)
 
 
-@router.callback_query(Text(startswith='revive_pokemon|'))
+@router.callback_query(Text(startswith='revive_pokemon'))
 async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     flood_limit = (await state.get_data()).get('flood_limit')
     if flood_limit:
         return await call.answer(f'Wait {int(flood_limit - time.time())} seconds!!!')
 
-    _, game_id = call.data.split('|')
+    action, game_id = call.data.split('|')
     game = await game_service.get_game(game_id)
+
+    is_donate = False
+    if action.endswith(PURCHASE_SPECIAL_EMOJI):
+        is_donate = True
 
     pokemons_to_revive = game.get_attacker().get_pokemons_to_revive()
 
     if not pokemons_to_revive:
         return await call.answer("All pokemons are alive!")
 
-    text, kb = revive_pokemon_menu(game, pokemons_to_revive)
+    text, kb = revive_pokemon_menu(game, pokemons_to_revive, is_donate)
     await try_to_edit_caption(call, state, text, kb)
 
 

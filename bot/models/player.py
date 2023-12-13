@@ -1,6 +1,6 @@
 import random
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from aiogram.types import Chat, User
@@ -8,11 +8,9 @@ from aiogram.utils import markdown
 from aiogram.utils.link import create_tg_link
 
 from bot.data import const
-from bot.data.const import REVIVE_HP, SLEEPING_COUNTER, POTION, REVIVE, SLEEPING_PILLS
+from bot.data.const import REVIVE_HP, SLEEPING_COUNTER
 from bot.data.dogemons import DOGEMONS
 from bot.data.special_cards import SPECIAL_CARDS
-from bot.handlers.REWORK_IT import get_purchased_cards
-from bot.models.pokemon_types import PokemonType
 from bot.models.pokemon import Pokemon
 
 
@@ -24,9 +22,10 @@ class Player:
 
     pokemons_pool: dict  # pokemon_name => is_alive; pool of pokemons that can be selected
     last_move_time: float  # unix time of last meaningful move (successful attack)
-    pokemon: Optional[Pokemon] = None   # active pokemon
+    pokemon: Optional[Pokemon] = None  # active pokemon
 
     uses_of_special_cards: int = 0  # number of used special cards
+    used_purchased_special_cards: [str] = field(default_factory=list)  # special cards that were purchased
     sleeping_pills_counter: [int] = None  # sleeping_pills_counter for sleeping pills
     revived_pokemon: Optional[str] = None  # pokemon name that was revived by special card
 
@@ -70,21 +69,25 @@ class Player:
     def update_uses_special_cards(self):
         self.uses_of_special_cards += 1
 
+    def update_used_purchased_special_cards(self, special_card_name):
+        self.used_purchased_special_cards.append(special_card_name)
+
     @property
     def mention(self):
         return markdown.hlink(self.name, create_tg_link("user", id=self.id))
 
     @classmethod
-    def new(cls, user: Chat | User):
+    async def new(cls, user: Chat | User):
         return cls(
             id=user.id,
             name=user.first_name,
             pokemons_pool=get_pokemons_pool(),
             last_move_time=time.time(),
-            special_cards=get_special_cards(),
+            special_cards=get_random_special(),
             sleeping_pills_counter=None,
             revived_pokemon=None,
             uses_of_special_cards=0,
+            used_purchased_special_cards=[]
         )
 
     def to_mongo(self):
@@ -97,7 +100,8 @@ class Player:
             "special_cards": self.special_cards,
             "sleeping_pills_counter": self.sleeping_pills_counter if self.sleeping_pills_counter else None,
             "revived_pokemon": self.revived_pokemon if self.revived_pokemon else None,
-            "uses_of_special_cards": self.uses_of_special_cards
+            "uses_of_special_cards": self.uses_of_special_cards,
+            "used_purchased_special_cards": self.used_purchased_special_cards
         }
 
     @classmethod
@@ -112,6 +116,7 @@ class Player:
             sleeping_pills_counter=mongo_data["sleeping_pills_counter"],
             revived_pokemon=mongo_data["revived_pokemon"],
             uses_of_special_cards=mongo_data["uses_of_special_cards"],
+            used_purchased_special_cards=mongo_data["used_purchased_special_cards"]
         )
 
     def use_poison(self):
@@ -129,16 +134,7 @@ def get_pokemons_pool():
     return {dogemon: True for dogemon in pokemons[:3]}  # 3 random pokemons, True means that pokemon is alive
 
 
-def get_special_cards():
-    random_card = get_random_special()
-    purchase_cards = await get_purchased_cards()
-    if purchase_cards is None:
-        return random_card
-    return random_card + purchase_cards
-
-
 def get_random_special():
     special_cards = SPECIAL_CARDS
     random.shuffle(special_cards)
     return [special_cards[0]]
-

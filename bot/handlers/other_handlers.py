@@ -1,11 +1,11 @@
 from aiogram import F, Router, types
-from aiogram.filters import Text, Command
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.utils import markdown
 from aiogram.utils.link import create_tg_link
 
 from bot.db import db
-from bot.handlers.REWORK_IT import end_game
+from bot.REWORK_IT import end_game
 from bot.handlers.battle_handlers import get_image_bytes, kick_user
 from bot.utils import game_service
 
@@ -47,4 +47,6 @@ async def cancel_games(message: types.Message, state: FSMContext):
         game = await game_service.get_game(game_id)
         winner, looser = game.game_over_coz_flee(message.from_user.id)
         await end_game(winner.id, game)
+
+        await kick_user(state, game.chat_id, looser, winner)
         await message.answer(f'{winner.mention} win, cuz {looser.mention} canceled all games')
