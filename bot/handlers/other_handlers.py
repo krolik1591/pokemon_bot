@@ -1,9 +1,12 @@
+import math
+
 from aiogram import F, Router, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.utils import markdown
 from aiogram.utils.link import create_tg_link
 
+from bot.data.const import REWARD
 from bot.db import db
 from bot.REWORK_IT import end_game
 from bot.handlers.battle_handlers import get_image_bytes, kick_user
@@ -48,5 +51,12 @@ async def cancel_games(message: types.Message, state: FSMContext):
         winner, looser = game.game_over_coz_flee(message.from_user.id)
         await end_game(winner.id, game)
 
+        pool = game.bet * 2 if game.bet else 0
+        reward = math.floor(pool * REWARD)
+
+        text = f'Game msg delete cuz {looser.mention} canceled all games.\n\nWinner: {winner.mention}.\nWinner reward: {reward} $POKECARD.'
+        await state.bot.edit_message_caption(caption=text, chat_id=game.chat_id, message_id=game.msg_id)
+        await message.answer(f'{winner.mention} win, cuz {looser.mention} canceled all games.\n\nWinner reward: {reward} $POKECARD.')
+
+        # if bot admin
         await kick_user(state, game.chat_id, looser, winner)
-        await message.answer(f'{winner.mention} win, cuz {looser.mention} canceled all games')

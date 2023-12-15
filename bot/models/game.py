@@ -19,6 +19,8 @@ class Game:
     bet: int
     chat_id: int
 
+    msg_id: Optional[int] = None
+
     db_service: DbService = DbService()
 
     game_id: Optional[str] = None
@@ -26,6 +28,9 @@ class Game:
 
     creation_time: float = time.time()
     winner: Optional[int] = None
+
+    def set_msg_id(self, msg_id):
+        self.msg_id = msg_id
 
     def select_pokemon(self, pokemon_name):
         self.get_attacker().select_pokemon(pokemon_name)
@@ -184,7 +189,8 @@ class Game:
             winner=None,
             creation_time=time.time(),
             chat_id=chat_id,
-            db_service=cls.db_service
+            db_service=cls.db_service,
+            msg_id=None,
         )
 
     @classmethod
@@ -198,6 +204,7 @@ class Game:
             creation_time=mongo_data['creation_time'],
             bet=mongo_data['bet'],
             chat_id=mongo_data['chat_id'],
+            msg_id=mongo_data['msg_id'],
         )
 
     def to_mongo(self):
@@ -209,6 +216,7 @@ class Game:
             "creation_time": self.creation_time,
             "bet": self.bet,
             "chat_id": self.chat_id,
+            "msg_id": self.msg_id,
         }
 
 

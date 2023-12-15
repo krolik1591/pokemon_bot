@@ -57,9 +57,9 @@ router = Router()
 @router.message(F.chat.type != "private", Text(startswith="/battle "))
 async def money_battle(message: types.Message, state: FSMContext):
     print("start battle")
-    available_chats = config.available_chat_ids.split(',')
-    if str(message.chat.id) not in available_chats:
-        return
+    # available_chats = config.available_chat_ids.split(',')
+    # if str(message.chat.id) not in available_chats:
+    #     return
 
     try:
         bet = int(message.text.removeprefix('/battle '))
@@ -119,11 +119,14 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
     text, kb = battle.select_dogemon_menu(game, first_move=True)
     image_bytes = get_image_bytes('image2.jpg')
 
-    await call.message.answer_photo(
+    msg = await call.message.answer_photo(
         photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
         caption=text,
         reply_markup=kb
     )
+
+    game.set_msg_id(msg.message_id)
+    await game_service.save_game(game)
 
 
 @router.callback_query(Text(startswith='select_dogemon_menu|'))
