@@ -14,8 +14,7 @@ from bot.utils.db_service import DbService
 
 @dataclass
 class Game:
-    player1: Player
-    player2: Player
+    players: list[Player]
     bet: int
     chat_id: int
 
@@ -141,17 +140,41 @@ class Game:
         self.get_attacker().last_move_time = time.time()
 
     def is_game_over(self):
-        # return (winner, loser) or None
-        if self.player1.is_lose():
-            return self.player2, self.player1
-        if self.player2.is_lose():
-            return self.player1, self.player2
+        # return ([winner], [loser]) or None
+        team1, team2 = self.get_teams()
+        if self.is_team_lose(team1):
+            return team2, team1
+        if self.is_team_lose(team2):
+            return team1, team2
+
+    @staticmethod
+    def is_team_lose(team):
+        for player in team:
+            if not player.is_lose():
+                return False
+        return True
+
+    def get_teams(self):
+        # return [team1], [team2]
+        if len(self.players) == 2:
+            return self.players[:1], self.players[1:]
+        if len(self.players) == 4:
+            return self.players[:2], self.players[2:]
 
     def game_over_coz_flee(self, looser_id):
-        # return (winner, loser)
-        if looser_id == self.player1.id:
-            return self.player2, self.player1
-        return self.player1, self.player2
+        # return ([winner], [loser])
+        team1, team2 = self.get_teams()
+        if self.is_team_lose_coz_flee(team1, looser_id):
+            return team2, team1
+        if self.is_team_lose_coz_flee(team2, looser_id):
+            return team1, team2
+
+    @staticmethod
+    def is_team_lose_coz_flee(team, looser_id):
+        for player in team:
+            if player.id == looser_id:
+                return True
+        return False
 
     def is_game_over_coz_timeout(self):
         # return winner or None
