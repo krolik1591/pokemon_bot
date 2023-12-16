@@ -93,11 +93,11 @@ async def update_user_balance(tg_userid, balance_to_add):
     )
 
 
-async def deposit_tokens(tg_userid, amount, game_id = str(10000)):
-    new_deposit = { 'txnHash': game_id, 'value': amount, 'time':  datetime.now()}
+async def deposit_tokens(winner_ids: [], amount, game_id = str(10000)):
+    new_deposit = {'txnHash': game_id, 'value': amount, 'time':  datetime.now()}
     await mongodb['users'].update_one(
         {
-            'tg_userid': tg_userid
+            'tg_userid': {'$in': winner_ids}
         },
         {
             '$push': {
@@ -186,7 +186,8 @@ if __name__ == '__main__':
     async def main():
         # x = await get_active_game(357108179)
         # await lower_item(357108179, 'potion')
-        x = await add_new_special(815040834)
+        x = await find(815040834)
+        print(x['items'])
 
 
     asyncio.run(main())

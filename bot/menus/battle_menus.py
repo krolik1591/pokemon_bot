@@ -30,16 +30,24 @@ def select_dogemon_menu(game, first_move=False, latest_actions=None, change_firs
         return InlineKeyboardButton(text=btn_text,
                                     callback_data=f"select_dogemon_menu|{pokemon_name}|{game.game_id}|{change_first_move}")
 
-    player, opponent = game.get_attacker_defencer()
+    attacker = game.get_attacker()
 
     actions_text = _actions_text(latest_actions)
-    select_pok_text = f'The first move is yours, {player.mention}, choose your PokéCard!' \
-        if first_move else f'{player.mention} choose your PokéCard!'
-    opponents_pokemon = f"🔶{opponent.name} plays as: {_pokemon_text_small(opponent.pokemon)}\n" if opponent.pokemon else ""
+    select_pok_text = f'The first move is yours, {attacker.mention}, choose your PokéCard!' \
+        if first_move else f'{attacker.mention} choose your PokéCard!'
 
-    text = f"{actions_text}\n\n{opponents_pokemon}\n{select_pok_text}"
+    attacker_team, defender_team = game.get_attacker_defencer_team()
+    other_players = game.players
+    other_players_text = []
+    for player in other_players:
+        if player.pokemon:
+            other_players_text.append(f"🔶{player.name} plays as: {_pokemon_text_small(player.pokemon)}\n")
+        else:
+            other_players_text.append(f"🔶{player.name} plays as: waiting...\n")
 
-    pokemons_btns = [_pokemon_btn(pokemon_name) for pokemon_name, is_alive in player.pokemons_pool.items() if is_alive]
+    text = f"{actions_text}\n\n{''.join(other_players_text)}\n{select_pok_text}"
+
+    pokemons_btns = [_pokemon_btn(pokemon_name) for pokemon_name, is_alive in attacker.pokemons_pool.items() if is_alive]
     pokemons_btns = _columns(pokemons_btns, 1)  # 1 column
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -51,15 +59,17 @@ def select_dogemon_menu(game, first_move=False, latest_actions=None, change_firs
 
 
 def battle_menu(game: Game, latest_actions=None):
-    dogemon_text = _pokemon_text(game.player1)
-    enemy_dogemon_text = _pokemon_text(game.player2)
+    players_text = []
+    for player in game.players:
+        if player.pokemon:
+            players_text.append(_pokemon_text(player))
+    players_text = '\n\n'.join(players_text)
     actions_text = _actions_text(latest_actions)
 
     player = game.get_attacker()
 
     text = f"{player.mention}, it's your turn to attack!\n\n" \
-           f"{dogemon_text}\n\n" \
-           f"{enemy_dogemon_text}\n\n" \
+           f"{players_text}\n\n" \
            f"{actions_text}"
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -80,11 +90,14 @@ def battle_menu(game: Game, latest_actions=None):
 
 
 def select_attack_menu(game: Game):
+    attacker_team, defender_team = game.get_attacker_defencer_team()
+    defender_index = game.players.index(defender_team[0])
+
     def _spell_btn(spell: Spell):
         spell_icon = '🛡' if spell.is_defence else f'{spell.attack}⚔'
         btn_text = f'{spell.name} ({spell_icon}) [x{spell.count}]'
         # ... is_special ..... is_revive
-        return InlineKeyboardButton(text=btn_text, callback_data=f"fight|F|{spell.name}|{game.game_id}|F")
+        return InlineKeyboardButton(text=btn_text, callback_data=f"fight|F|{spell.name}|{game.game_id}|F|{defender_index}")
 
     spells = game.get_attacker().pokemon.spells
 
@@ -102,31 +115,27 @@ def select_attack_menu(game: Game):
     return kb
 
 
-async def special_cards_menu(game: Game):
-    player = game.get_attacker()
-
-    available_donat_cards = await game.db_service.get_purchased_cards(player.id)
-    used_purchase_special = player.used_purchased_special_cards
-
-    donate_cards = [card for card in available_donat_cards if card not in used_purchase_special]
+def special_cards_menu(game: Game, donate_special: list):
+    attacker, defender = game.get_attacker_defencer_team()
+    defender_index = game.players.index(defender[0])
 
     special_btns = []
-    if len(player.special_cards) == 1:
-        if player.special_cards[0] == REVIVE:
+    if len(attacker[0].special_cards) == 1:
+        if attacker[0].special_cards[0] == REVIVE:
             callback_data = f"revive_pokemon|{game.game_id}"
         else:
             # ... is_special ..... is_revive
-            callback_data = f"fight|T|{player.special_cards[0]}|{game.game_id}|F"
+            callback_data = f"fight|T|{attacker[0].special_cards[0]}|{game.game_id}|F|{defender_index}"
 
-        special_btns.append(_special_btn(player.special_cards[0], callback_data))
+        special_btns.append(_special_btn(attacker[0].special_cards[0], callback_data))
 
-    for index, special_card in enumerate(donate_cards):
+    for index, special_card in enumerate(donate_special):
         text = special_card + ' 💵'
 
         if special_card == REVIVE:
             callback_data = f"revive_pokemon{IS_DONATE_SPECIAL}|{game.game_id}"
         else:
-            callback_data = f"fight|T|{special_card}{IS_DONATE_SPECIAL}|{game.game_id}|F"
+            callback_data = f"fight|T|{special_card}{IS_DONATE_SPECIAL}|{game.game_id}|F|{defender_index}"
 
         special_btns.append(_special_btn(text, callback_data))
 
@@ -145,16 +154,16 @@ def revive_pokemon_menu(game: Game, pokemons_to_revive, is_donate):
     text = 'Select pokemon to revive:'
 
     if is_donate:
-        # ... is_special ..... is_revive
+        # ... is_special ..... is_revive|special_card_target
         revive_btns = [
             InlineKeyboardButton(text=_pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=True),
-                                 callback_data=f"fight|T|{pokemon_name}{IS_DONATE_SPECIAL}|{game.game_id}|T")
+                                 callback_data=f"fight|T|{pokemon_name}{IS_DONATE_SPECIAL}|{game.game_id}|T|None")
             for pokemon_name in pokemons_to_revive
         ]
     else:
         revive_btns = [
             InlineKeyboardButton(text=_pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=True),
-                                 callback_data=f"fight|T|{pokemon_name}|{game.game_id}|T")
+                                 callback_data=f"fight|T|{pokemon_name}|{game.game_id}|T|None")
             for pokemon_name in pokemons_to_revive
         ]
 

@@ -29,13 +29,13 @@ async def take_money_from_players(player1_id, player2_id, bet):
     await db.withdraw_tokens(player2_id, bet)
 
 
-async def end_game(winner_id, game: Game):
-    await db.update_game(game.game_id, {'winner': winner_id})
+async def end_game(winners_id: [], game: Game):
+    await db.update_game(game.game_id, {'winner': winners_id})
 
     if game.bet is None:
         return
     for_winner = game.bet * 2 * REWARD
     prize_pool = game.bet * 2 * PRIZE_POOL
 
-    await db.deposit_tokens(winner_id, for_winner)
+    await db.deposit_tokens(winners_id, for_winner)
     await db.deposit_burn(prize_pool)

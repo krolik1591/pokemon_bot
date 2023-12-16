@@ -38,19 +38,12 @@ class Game:
         attacker = self.players[self.who_move]
 
         if pokemon_name.endswith(IS_DONATE_SPECIAL):
-            pokemon_name = pokemon_name.removesuffix(IS_DONATE_SPECIAL)
-
-            available_donate_cards = await self.db_service.get_purchased_cards(attacker.id)
-            if REVIVE not in available_donate_cards:
-                raise Exception("Don't have this special card")
-
-            attacker.update_used_purchased_special_cards(REVIVE)
-            await self.db_service.subtract_special_card(attacker.id, REVIVE)
+            pokemon_name = await self.process_donate_special(attacker, pokemon_name, is_revive=True)
+            print(pokemon_name)
         else:
             attacker.special_cards.remove(REVIVE)
 
         actions = []
-
         if pokemon_name in attacker.get_pokemons_to_revive():
             attacker.revive_pokemon(pokemon_name)
             actions.append(f"{attacker.mention} revived {pokemon_name}")
@@ -58,18 +51,11 @@ class Game:
         attacker.uses_of_special_cards += 1
         return actions
 
-    async def use_special_card(self, special_card: str):
-        attacker, defender = self.get_attacker_defencer()
+    async def use_special_card(self, special_card: str, defender_index: str):
+        attacker = self.get_attacker()
 
         if special_card.endswith(IS_DONATE_SPECIAL):
-            special_card = special_card.removesuffix(IS_DONATE_SPECIAL)
-
-            available_donate_cards = await self.db_service.get_purchased_cards(attacker.id)
-            if special_card not in available_donate_cards:
-                raise Exception("Don't have this special card")
-
-            attacker.update_used_purchased_special_cards(special_card)
-            await self.db_service.subtract_special_card(attacker.id, special_card)
+            special_card = await self.process_donate_special(attacker, special_card, is_revive=False)
         else:
             attacker.special_cards.remove(special_card)
 
@@ -80,6 +66,7 @@ class Game:
             actions.append(f"{attacker.mention} use potion and restored {math.floor(heal_amount)} hp")
 
         elif special_card == const.SLEEPING_PILLS:
+            defender = self.players[int(defender_index)]
             defender.set_sleeping_pills()
             actions.append(f"{attacker.mention} use sleeping pills! "
                            f"{defender.mention} next {const.SLEEPING_COUNTER} attack(s) will be cancelled")
@@ -91,9 +78,32 @@ class Game:
 
         return actions
 
+    async def process_donate_special(self, attacker, special_card, is_revive):
+        new_special_name = special_card.removesuffix(IS_DONATE_SPECIAL)
+
+        if not is_revive:
+            available_donate_cards = await self.db_service.get_purchased_cards(attacker.id)
+            if new_special_name not in available_donate_cards:
+                raise Exception("Don't have this special card")
+
+            attacker.update_used_purchased_special_cards(new_special_name)
+            await self.db_service.subtract_special_card(attacker.id, new_special_name)
+        else:
+            attacker.update_used_purchased_special_cards(REVIVE)
+            await self.db_service.subtract_special_card(attacker.id, REVIVE)
+
+        return new_special_name
+
+    def get_player_by_id(self, player_id: int) -> Player:
+        for player in self.players:
+            if player.id == player_id:
+                return player
+        raise Exception("Player not found")
+
     # returns list of actions
-    def cast_spell(self, spell_name: str) -> [str]:
-        attacker, defencer = self.get_attacker_defencer()
+    def cast_spell(self, spell_name: str, defender_index: str) -> [str]:
+        # attacker, defencer = self.get_attacker_defencer_team()
+        attacker = self.get_attacker()
         spell = attacker.pokemon.get_spell_by_name(spell_name)
 
         actions = []
@@ -113,19 +123,21 @@ class Game:
             actions.append(f"{attacker.mention} attack is cancelled by sleeping pills. {attacker.sleeping_pills_counter or 0} turns left")
             return actions
 
+        defender = self.players[int(defender_index)]
+
         # calculate dmg based on spell and pokemons types
-        dmg = _calc_dmg(spell, attacker, defencer)
+        dmg = _calc_dmg(spell, attacker, defender)
 
         # check if defencer has shield and try to attack
-        if defencer.pokemon.shield:
-            is_attack_canceled = defencer.pokemon.attack_shield()
+        if defender.pokemon.shield:
+            is_attack_canceled = defender.pokemon.attack_shield()
             if is_attack_canceled:
                 actions.append(f"{attacker.mention} attack was canceled by shield. Protected {dmg} dmg")
                 return actions
-            actions.append(f"{defencer.mention} shield was broken")
+            actions.append(f"{defender.mention} shield was broken")
 
         # do dmg and check if pokemon dead after it
-        is_pokemon_dead = defencer.attack_pokemon(dmg)
+        is_pokemon_dead = defender.attack_pokemon(dmg)
         actions.append(f"{attacker.mention} dealt {dmg} dmg by {spell.name}")
         if is_pokemon_dead:
             actions.append(f"{is_pokemon_dead.name} dead :(")
@@ -182,13 +194,14 @@ class Game:
 
     def is_game_over_coz_timeout(self):
         # return winner or None
-        attacker, defencer = self.get_attacker_defencer()
+        attacker_team, defender_team = self.get_attacker_defencer_team()
+        attacker = self.get_attacker()
         delta_time = time.time() - attacker.last_move_time
         if delta_time > const.TIMEOUT:
-            return defencer, attacker
+            return defender_team, attacker_team
         return None, None
 
-    def get_attacker_defencer(self):
+    def get_attacker_defencer_team(self):
         team1, team2 = self.get_teams()
 
         if len(self.players) == 2:
@@ -227,7 +240,7 @@ class Game:
     def from_mongo(cls, mongo_data):
         return cls(
             game_id=mongo_data['_id'],
-            players=mongo_data['players'],
+            players=[Player.from_mongo(player) for player in mongo_data['players']],
             who_move=mongo_data['who_move'],
             winner=mongo_data['winner'],
             creation_time=mongo_data['creation_time'],
@@ -238,7 +251,7 @@ class Game:
 
     def to_mongo(self):
         return {
-            "players": self.players,
+            "players": [player.to_mongo() for player in self.players],
             "who_move": self.who_move,
             "winner": self.winner,
             "creation_time": self.creation_time,

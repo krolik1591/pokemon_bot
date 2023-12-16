@@ -3,9 +3,10 @@ import math
 import os
 import time
 from pathlib import Path
+from pprint import pprint
 
 from aiogram import F, Router, exceptions, types
-from aiogram.filters import Text
+from aiogram.filters import Text, Command
 from aiogram.fsm.context import FSMContext
 
 from bot.data.const import REWARD, PRIZE_POOL, MAX_USES_OF_SPECIAL_CARDS, IS_DONATE_SPECIAL
@@ -100,8 +101,7 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
         await take_money_from_players(player_1_id, call.from_user.id, bet)
 
     game = Game.new(
-        await Player.new(await state.bot.get_chat(player_1_id)),
-        await Player.new(call.from_user),
+        [await Player.new(await state.bot.get_chat(player_1_id)), await Player.new(call.from_user)],
         bet=bet,
         chat_id=call.message.chat.id
     )
@@ -190,12 +190,13 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
 
         available_donat_cards = await game.db_service.get_purchased_cards(attacker.id)
         used_purchase_special = attacker.used_purchased_special_cards
-        donate_cards = [card for card in available_donat_cards if card not in used_purchase_special]
+        donate_special = [card for card in available_donat_cards if card not in used_purchase_special]
 
-        if len(attacker.special_cards) == 0 and len(donate_cards) == 0:
+        if len(attacker.special_cards) == 0 and len(donate_special) == 0:
             return await call.answer('You have no special cards!')
 
-        kb = await special_cards_menu(game)
+        if len(game.players) == 2:
+            kb = special_cards_menu(game, donate_special)
         return await try_to_edit_reply_markup(call, state, kb)
 
     if action == 'flee':
@@ -208,7 +209,7 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     if flood_limit:
         return await call.answer(f'Wait {int(flood_limit - time.time())} seconds!!!')
 
-    _, is_special, item_name, game_id, is_revive = call.data.split('|')
+    _, is_special, item_name, game_id, is_revive, defender_index = call.data.split('|')
 
     game = await game_service.get_game(game_id)
 
@@ -220,9 +221,9 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
             if is_revive == "T":
                 actions = await game.revive_pokemon(item_name)
             else:
-                actions = await game.use_special_card(item_name)
+                actions = await game.use_special_card(item_name, defender_index)
         else:
-            actions = game.cast_spell(item_name)
+            actions = game.cast_spell(item_name, defender_index)
             game.end_move()
 
     except Exception as ex:
@@ -277,8 +278,9 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
     _, game_id = call.data.split('|')
     game = await game_service.get_game(game_id)
 
-    _, defender = game.get_attacker_defencer()
-    if call.from_user.id != defender.id:
+    _, defender_team = game.get_attacker_defencer_team()
+
+    if call.from_user.id not in [player.id for player in defender_team]:
         return await call.answer('Only defender can use this btn')
 
     winner, looser = game.is_game_over_coz_timeout()
@@ -304,22 +306,28 @@ async def process_end_game(call, state, game, win_type):
     burnt = math.floor(pool * PRIZE_POOL)
 
     if win_type == 'flee':
-        winner, looser = game.game_over_coz_flee(call.from_user.id)
-        text = f'{winner.mention} won {reward} $POKECARD while {looser.mention} fled the battle and {burnt} will be burnt'
+        winner_team, looser_team = game.game_over_coz_flee(call.from_user.id)
+        winners = '\n'.join([player.mention for player in winner_team])
+        loosers = '\n'.join([player.mention for player in looser_team])
+        text = f'{winners} won {reward} $POKECARD while {loosers} fled the battle and {burnt} will be burnt'
     elif win_type == 'clear':
-        looser, winner = game.get_attacker_defencer()
-        text = f'{winner.mention} won {reward} $POKECARD. {looser.mention} has no PokéCards left'
+        looser_team, winner_team = game.get_attacker_defencer_team()
+        winners = '\n'.join([player.mention for player in winner_team])
+        loosers = '\n'.join([player.mention for player in looser_team])
+        text = f'{winners} won {reward} $POKECARD. {loosers} has no PokéCards left'
     elif win_type == 'timeout':
-        winner, looser = game.is_game_over_coz_timeout()
-        text = f'{winner.mention} won {reward} $POKECARD while {looser.mention} was inactive'
+        winner_team, looser_team = game.is_game_over_coz_timeout()
+        winners = '\n'.join([player.mention for player in winner_team])
+        loosers = '\n'.join([player.mention for player in looser_team])
+        text = f"{winners} won {reward} $POKECARD while {loosers} was inactive"
     else:
         raise ValueError(f'Unknown loose_type: {win_type}')
 
     await try_to_edit_caption(call, state, text, kb=None)
-    await end_game(winner.id, game)
+    await end_game([winner.id for winner in winner_team], game)
 
     # if bot is admin
-    await kick_user(state, call.message.chat.id, looser, winner)
+    await kick_user(state, call.message.chat.id, looser_team, winner_team)
 
 
 async def try_to_edit_caption(call, state, text, kb):
@@ -354,25 +362,24 @@ async def try_to_edit_reply_markup(call, state, kb):
         await call.message.edit_reply_markup(reply_markup=kb)
 
 
-async def kick_user(state, chat_id, looser, winner):
+async def kick_user(state, chat_id, loosers: [Player], winners: [Player]):
     try:
-        await state.bot.ban_chat_member(chat_id, looser.id)
-        # await state.bot.unban_chat_member(chat_id, looser.id)
-        await db.increase_exclusive_win(winner.id)
+        for looser in loosers:
+            await state.bot.ban_chat_member(chat_id, looser.id)
+        for winner in winners:
+            await db.increase_exclusive_win(winner.id)
 
         main_chat = config.available_chat_ids.split(',')
-        winners = await db.get_exclusive_winners()
+        exclusive_winners = await db.get_exclusive_winners()
 
         formatted_winners = []
-        for winner in winners:
-            name = winner['name']
-            wins = winner['wins']
-            username = winner['username']
-            link = f"https://t.me/{username}"
-            formatted_winners.append(f'<a href="{link}">{name}</a> - {wins}')
+        for winner in exclusive_winners:
+            link = f"https://t.me/{winner['username']}"
+            formatted_winners.append(f"<a href='{link}'>{winner['name']}</a> - {winner['wins']}")
 
-        await state.bot.send_message(int(main_chat[0]),'<b>Exclusive Winners</b>\n\n' + '\n'.join(formatted_winners), disable_web_page_preview=True, parse_mode="HTML")
-        await state.bot.send_message(chat_id, f'User {looser.mention} lost and was kicked!')
+        await state.bot.send_message(int(main_chat[0]), '<b>Exclusive Winners</b>\n\n' + '\n'.join(formatted_winners),
+                                     disable_web_page_preview=True, parse_mode="HTML")
+        await state.bot.send_message(chat_id, f"User {', '.join(loosers)} lost and was kicked!")
     except exceptions.TelegramBadRequest:
         print('Im not a admin!')
 
