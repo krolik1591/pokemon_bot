@@ -23,40 +23,69 @@ from bot.utils.config_reader import config
 router = Router()
 
 
-# @router.message(F.chat.type != "private", Command("hi"))
-# async def fun_battle(message: types.Message):
-#     winners = await db.get_exclusive_winners()
-#     print(winners)
+@router.message(F.chat.type != "private", Text(startswith="/gb "))
+async def group_battle(message: types.Message, state: FSMContext):
+    print("start group battle")
+    # available_chats = config.available_chat_ids.split(',')
+    # if str(message.chat.id) not in available_chats:
+    #     return
 
-#     formatted_winners = []
-#     for winner in winners:
-#         name = winner['name']
-#         wins = winner['wins']
-#         username = winner['username']
-#         link = f"https://t.me/{username}"
-#         formatted_winners.append(f'<a href="{link}">{name}</a> - {wins}')
+    try:
+        bet = int(message.text.removeprefix('/gb '))
+        if bet <= 0:
+            raise ValueError
+    except ValueError:
+        return await message.answer('Bet must be integer and bigger than 0!')
 
-#     await message.answer('<b>Exclusive Winners</b>\n\n' + '\n'.join(formatted_winners), disable_web_page_preview=True, parse_mode="HTML")
-#     available_chats = config.available_chat_ids.split(',')
-#     if str(message.chat.id) not in available_chats:
-#         return
-#
-#     err = await pre_game_check(message.from_user.id, None, without_bets=True)
-#     if err:
-#         return await message.answer(err)
-#
-#     text, kb = battle.waiting_battle_menu(message.from_user, None)
-#     image_bytes = get_image_bytes('image1.jpg')
-#
-#     await message.answer_photo(
-#         photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
-#         caption=text,
-#         reply_markup=kb
-#     )
+    err = await pre_game_check(message.from_user, int(bet))
+    if err:
+        return await message.answer(err)
+
+    players = {
+        'blue': [message.from_user],
+        'red': []
+    }
+    await state.update_data(players=players)
+
+    text, kb = battle.waiting_group_battle_menu(message.from_user, bet, players)
+    image_bytes = get_image_bytes('image1.jpg')
+
+    await message.answer_photo(
+        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
+        caption=text,
+        reply_markup=kb
+    )
+
+
+@router.callback_query(Text(startswith='group_battle|'))
+async def join_group_battle(call: types.CallbackQuery, state: FSMContext):
+    print("join group battle")
+    _, bet, team = call.data.split('|')
+
+    err = await pre_game_check(call.from_user, int(bet))
+    if err:
+        return await call.message.answer(err)
+
+    players = (await state.get_data()).get('players')
+    if len(players) == 4:
+        pass
+
+    players.append(call.from_user.id)
+    await state.update_data(players=players)
+
+    text, kb = battle.waiting_group_battle_menu(players[0], bet, [], [])
+    image_bytes = get_image_bytes('image1.jpg')
+
+    await call.message.answer_photo(
+        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
+        caption=text,
+        reply_markup=kb
+    )
+
 
 
 @router.message(F.chat.type != "private", Text(startswith="/battle "))
-async def money_battle(message: types.Message, state: FSMContext):
+async def start_battle(message: types.Message, state: FSMContext):
     print("start battle")
     # available_chats = config.available_chat_ids.split(',')
     # if str(message.chat.id) not in available_chats:

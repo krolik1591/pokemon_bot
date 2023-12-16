@@ -24,6 +24,28 @@ def waiting_battle_menu(user: User, bet):
     return text, kb
 
 
+def waiting_group_battle_menu(user: User, bet, players):
+    text_blue = 'Blue team:\n'
+    text_red = 'Red team:\n'
+    for blue_player in players['blue']:
+        text_blue += f"     {blue_player.mention_html()}\n"
+    for red_player in players['red']:
+        text_red += f"     {red_player.mention_html()}\n"
+
+    text = f'{text_blue}\n{text_red}\n\nBet: {bet}'
+
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text=f'Join BLUE ({len(players["blue"])}/2)', callback_data=f"group_battle|{bet}|blue"),
+            InlineKeyboardButton(text=f'Join RED ({len(players["red"])}/2)', callback_data=f"group_battle|{bet}|red"),
+
+        ],
+        [InlineKeyboardButton(text='Cancel', callback_data=f"cancel_battle|{user.id}")]
+    ])
+
+    return text, kb
+
+
 def select_dogemon_menu(game, first_move=False, latest_actions=None, change_first_move=False):
     def _pokemon_btn(pokemon_name):
         btn_text = _pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=True)
@@ -47,7 +69,8 @@ def select_dogemon_menu(game, first_move=False, latest_actions=None, change_firs
 
     text = f"{actions_text}\n\n{''.join(other_players_text)}\n{select_pok_text}"
 
-    pokemons_btns = [_pokemon_btn(pokemon_name) for pokemon_name, is_alive in attacker.pokemons_pool.items() if is_alive]
+    pokemons_btns = [_pokemon_btn(pokemon_name) for pokemon_name, is_alive in attacker.pokemons_pool.items() if
+                     is_alive]
     pokemons_btns = _columns(pokemons_btns, 1)  # 1 column
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -97,7 +120,8 @@ def select_attack_menu(game: Game):
         spell_icon = '🛡' if spell.is_defence else f'{spell.attack}⚔'
         btn_text = f'{spell.name} ({spell_icon}) [x{spell.count}]'
         # ... is_special ..... is_revive
-        return InlineKeyboardButton(text=btn_text, callback_data=f"fight|F|{spell.name}|{game.game_id}|F|{defender_index}")
+        return InlineKeyboardButton(text=btn_text,
+                                    callback_data=f"fight|F|{spell.name}|{game.game_id}|F|{defender_index}")
 
     spells = game.get_attacker().pokemon.spells
 
