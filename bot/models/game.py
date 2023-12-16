@@ -23,7 +23,7 @@ class Game:
     db_service: DbService = DbService()
 
     game_id: Optional[str] = None
-    is_player1_move: bool = True
+    who_move: int = 0   # index of player
 
     creation_time: float = time.time()
     winner: Optional[int] = None
@@ -35,7 +35,7 @@ class Game:
         self.get_attacker().select_pokemon(pokemon_name)
 
     async def revive_pokemon(self, pokemon_name):
-        attacker, defender = self.get_attacker_defencer()
+        attacker = self.players[self.who_move]
 
         if pokemon_name.endswith(IS_DONATE_SPECIAL):
             pokemon_name = pokemon_name.removesuffix(IS_DONATE_SPECIAL)
@@ -133,8 +133,12 @@ class Game:
         return actions
 
     def end_move(self):
-        self.is_player1_move = not self.is_player1_move
-        self.update_last_move_time()  # start his move, reset move time
+        if self.who_move == len(self.players) - 1:
+            self.who_move = 0
+            self.update_last_move_time()  # start his move, reset move time
+            return
+        self.who_move += 1
+        self.update_last_move_time()
 
     def update_last_move_time(self):
         self.get_attacker().last_move_time = time.time()
@@ -185,30 +189,33 @@ class Game:
         return None, None
 
     def get_attacker_defencer(self):
-        if self.get_attacker_index() == 1:
-            return self.player1, self.player2
-        return self.player2, self.player1
+        team1, team2 = self.get_teams()
 
-    def get_attacker_index(self) -> 1 | 2:
-        return 1 if self.is_player1_move else 2
+        if len(self.players) == 2:
+            if self.who_move == 0:
+                return team1, team2
+            return team2, team1
+
+        if len(self.players) == 4:
+            if self.who_move in [0, 1]:
+                return team1, team2
+            return team2, team1
 
     def get_attacker(self) -> Optional[Player]:
-        return self.player1 if self.is_player1_move else self.player2
+        return self.players[self.who_move]
 
     def is_player_attacks_now(self, player_id: int):
-        who_must_move = self.player1.id if self.is_player1_move else self.player2.id
-        return player_id == who_must_move
+        return self.players[self.who_move].id == player_id
 
     def is_all_pokemons_selected(self) -> bool:
-        return bool(self.player1.pokemon and self.player2.pokemon)
+        return all(player.pokemon for player in self.players)
 
     @classmethod
-    def new(cls, player1: Player, player2: Player, bet: Optional[int], chat_id: int):
+    def new(cls, players: [Player], bet: Optional[int], chat_id: int):
         return cls(
-            player1=player1,
-            player2=player2,
+            players=players,
             bet=bet,
-            is_player1_move=random.choice((True, False)),
+            who_move=random.randint(0, len(players) - 1),
             winner=None,
             creation_time=time.time(),
             chat_id=chat_id,
@@ -220,9 +227,8 @@ class Game:
     def from_mongo(cls, mongo_data):
         return cls(
             game_id=mongo_data['_id'],
-            player1=Player.from_mongo(mongo_data['player1']),
-            player2=Player.from_mongo(mongo_data['player2']),
-            is_player1_move=mongo_data['is_player1_move'],
+            players=mongo_data['players'],
+            who_move=mongo_data['who_move'],
             winner=mongo_data['winner'],
             creation_time=mongo_data['creation_time'],
             bet=mongo_data['bet'],
@@ -232,9 +238,8 @@ class Game:
 
     def to_mongo(self):
         return {
-            "player1": self.player1.to_mongo(),
-            "player2": self.player2.to_mongo(),
-            "is_player1_move": self.is_player1_move,
+            "players": self.players,
+            "who_move": self.who_move,
             "winner": self.winner,
             "creation_time": self.creation_time,
             "bet": self.bet,
