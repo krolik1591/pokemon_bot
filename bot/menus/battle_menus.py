@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, User
 
-from bot.data.const import REVIVE, IS_DONATE_SPECIAL
+from bot.data.const import REVIVE, IS_DONATE_EMOJI
 from bot.data.dogemons import DOGEMONS_MAP
 from bot.models.game import Game
 from bot.models.player import Player
@@ -112,9 +112,38 @@ def battle_menu(game: Game, latest_actions=None):
     return text, kb
 
 
+def select_defender_menu(game: Game, item_name, is_special: str):
+    print('select_defender_menu')
+    attacker_team, defender_team = game.get_attacker_defencer_team()
+
+    # actions_text = _actions_text(latest_actions)
+    # text = f"{actions_text}\n\n"
+    # text = f"{attacker_team[0].mention}, choose your target!"
+
+    defenders_btns = []
+    for defender in defender_team:
+        defender_index = game.players.index(defender_team[0])
+        text = f"{defender.name} ({_pokemon_text_small(defender.pokemon, is_link=True)})\n"
+        callback_data = f"fight|{is_special}|{item_name}|{game.game_id}|F|{defender_index}"
+        defenders_btns.append(_inline_btn(text, callback_data))
+
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        *defenders_btns,
+        [
+            InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon_menu|None|{game.game_id}|False"),
+            _timeout_btn(game.game_id)],
+    ])
+
+    return kb
+
+
 def select_attack_menu(game: Game):
     attacker_team, defender_team = game.get_attacker_defencer_team()
-    defender_index = game.players.index(defender_team[0])
+
+    if len(game.players) == 2:
+        defender_index = game.players.index(defender_team[0])
+    else:
+        defender_index = None
 
     def _spell_btn(spell: Spell):
         spell_icon = '🛡' if spell.is_defence else f'{spell.attack}⚔'
@@ -141,27 +170,17 @@ def select_attack_menu(game: Game):
 
 def special_cards_menu(game: Game, donate_special: list):
     attacker, defender = game.get_attacker_defencer_team()
-    defender_index = game.players.index(defender[0])
+    defender_index = game.players.index(defender[0]) if len(game.players) == 2 else None
 
     special_btns = []
     if len(attacker[0].special_cards) == 1:
-        if attacker[0].special_cards[0] == REVIVE:
-            callback_data = f"revive_pokemon|{game.game_id}"
-        else:
-            # ... is_special ..... is_revive
-            callback_data = f"fight|T|{attacker[0].special_cards[0]}|{game.game_id}|F|{defender_index}"
-
-        special_btns.append(_special_btn(attacker[0].special_cards[0], callback_data))
+        callback_data = set_callback_special(game, attacker[0].special_cards[0], defender_index, is_donate=False)
+        special_btns.append(_inline_btn(attacker[0].special_cards[0], callback_data))
 
     for index, special_card in enumerate(donate_special):
         text = special_card + ' 💵'
-
-        if special_card == REVIVE:
-            callback_data = f"revive_pokemon{IS_DONATE_SPECIAL}|{game.game_id}"
-        else:
-            callback_data = f"fight|T|{special_card}{IS_DONATE_SPECIAL}|{game.game_id}|F|{defender_index}"
-
-        special_btns.append(_special_btn(text, callback_data))
+        callback_data = set_callback_special(game, special_card, defender_index, is_donate=True)
+        special_btns.append(_inline_btn(text, callback_data))
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
         *special_btns,
@@ -174,6 +193,23 @@ def special_cards_menu(game: Game, donate_special: list):
     return kb
 
 
+def set_callback_special(game, special_card, defender_index, is_donate):
+    if is_donate:
+        if special_card == REVIVE:
+            callback_data = f"revive_pokemon{IS_DONATE_EMOJI}|{game.game_id}"
+        else:
+            # ... is_special ..... is_revive
+            callback_data = f"fight|T|{special_card}{IS_DONATE_EMOJI}|{game.game_id}|F|{defender_index}"
+
+    else:
+        if special_card == REVIVE:
+            callback_data = f"revive_pokemon|{game.game_id}"
+        else:
+            callback_data = f"fight|T|{special_card}|{game.game_id}|F|{defender_index}"
+
+    return callback_data
+
+
 def revive_pokemon_menu(game: Game, pokemons_to_revive, is_donate):
     text = 'Select pokemon to revive:'
 
@@ -181,7 +217,7 @@ def revive_pokemon_menu(game: Game, pokemons_to_revive, is_donate):
         # ... is_special ..... is_revive|special_card_target
         revive_btns = [
             InlineKeyboardButton(text=_pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=True),
-                                 callback_data=f"fight|T|{pokemon_name}{IS_DONATE_SPECIAL}|{game.game_id}|T|None")
+                                 callback_data=f"fight|T|{pokemon_name}{IS_DONATE_EMOJI}|{game.game_id}|T|None")
             for pokemon_name in pokemons_to_revive
         ]
     else:
@@ -202,7 +238,7 @@ def revive_pokemon_menu(game: Game, pokemons_to_revive, is_donate):
     return text, kb
 
 
-def _special_btn(text, callback_data):
+def _inline_btn(text, callback_data):
     return [InlineKeyboardButton(text=text, callback_data=callback_data)]
 
 

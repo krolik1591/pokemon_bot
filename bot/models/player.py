@@ -49,10 +49,7 @@ class Player:
         return pokemon
 
     def revive_pokemon(self, pokemon_name):
-        print(self.pokemons_pool)
         self.pokemons_pool[pokemon_name] = True
-        print(self.pokemons_pool)
-
         self.revived_pokemon = pokemon_name
 
     def set_sleeping_pills(self):

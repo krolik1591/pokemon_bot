@@ -20,4 +20,4 @@ POTION = "❤️‍🔥 Potion"
 SLEEPING_PILLS = "💊 Sleeping pills"
 REVIVE = "🚑 Revive"
 
-IS_DONATE_SPECIAL = 'Yes'
+IS_DONATE_EMOJI = '💵'

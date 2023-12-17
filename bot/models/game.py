@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from bot.data import const
-from bot.data.const import IS_DONATE_SPECIAL, REVIVE
+from bot.data.const import IS_DONATE_EMOJI, REVIVE
 from bot.models.player import Player
 from bot.models.pokemon_types import WEAKNESS
 from bot.models.spell import Spell
@@ -37,7 +37,7 @@ class Game:
     async def revive_pokemon(self, pokemon_name):
         attacker = self.players[self.who_move]
 
-        if pokemon_name.endswith(IS_DONATE_SPECIAL):
+        if pokemon_name.endswith(IS_DONATE_EMOJI):
             pokemon_name = await self.process_donate_special(attacker, pokemon_name, is_revive=True)
             print(pokemon_name)
         else:
@@ -54,7 +54,7 @@ class Game:
     async def use_special_card(self, special_card: str, defender_index: str):
         attacker = self.get_attacker()
 
-        if special_card.endswith(IS_DONATE_SPECIAL):
+        if special_card.endswith(IS_DONATE_EMOJI):
             special_card = await self.process_donate_special(attacker, special_card, is_revive=False)
         else:
             attacker.special_cards.remove(special_card)
@@ -79,7 +79,7 @@ class Game:
         return actions
 
     async def process_donate_special(self, attacker, special_card, is_revive):
-        new_special_name = special_card.removesuffix(IS_DONATE_SPECIAL)
+        new_special_name = special_card.removesuffix(IS_DONATE_EMOJI)
 
         if not is_revive:
             available_donate_cards = await self.db_service.get_purchased_cards(attacker.id)
