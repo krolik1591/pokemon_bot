@@ -7,11 +7,11 @@ from bot.models.game import Game
 from bot.models.spell import Spell
 
 
-def select_dogemon_menu(game, first_move=False, latest_actions=None, change_first_move=False):
+def select_dogemon_menu(game, first_move=False, latest_actions=None, who_next_move=False):
     def _pokemon_btn(pokemon_name):
         btn_text = _pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=True)
         return InlineKeyboardButton(text=btn_text,
-                                    callback_data=f"select_dogemon_menu|{pokemon_name}|{game.game_id}|{change_first_move}")
+                                    callback_data=f"select_dogemon_menu|{pokemon_name}|{game.game_id}|{who_next_move}")
 
     attacker = game.get_attacker()
 
@@ -30,10 +30,8 @@ def select_dogemon_menu(game, first_move=False, latest_actions=None, change_firs
 
     text = f"{actions_text}\n\n{''.join(other_players_text)}\n{select_pok_text}"
 
-    print(attacker.pokemons_pool)
     pokemons_btns = [_pokemon_btn(pokemon_name) for pokemon_name, is_alive in attacker.pokemons_pool.items() if
                      is_alive]
-    print(pokemons_btns)
     pokemons_btns = _columns(pokemons_btns, 1)  # 1 column
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -45,16 +43,14 @@ def select_dogemon_menu(game, first_move=False, latest_actions=None, change_firs
 
 
 def select_defender_menu(game: Game, item_name, is_special: str, is_donate=False):
-    print('select_defender_menu')
     attacker_team, defender_team = game.get_attacker_defencer_team()
-    print([player.pokemon.name for player in game.players])
-    print([player.pokemon.name for player in defender_team])
     defenders_btns = []
     for defender in defender_team:
         defender_index = game.players.index(defender)
-        text = f"{defender.name} ({_pokemon_text_small(defender.pokemon, is_link=True)})\n"
-
-        print(defender.pokemon.name, defender_index)
+        if defender.pokemon:
+            text = f"{defender.name} ({_pokemon_text_small(defender.pokemon, is_link=True)})\n"
+        else:
+            text = f"{defender.name} (DEAD)\n"
 
         if is_donate:
             callback_data = f"fight|{is_special}|{item_name}{IS_DONATE_EMOJI}|{game.game_id}|{defender_index}"

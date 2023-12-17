@@ -33,15 +33,7 @@ class Game:
         self.msg_id = msg_id
 
     def select_pokemon(self, pokemon_name):
-        attacker = self.get_attacker()
-        # if len(self.players) == 2:
-        attacker.select_pokemon(pokemon_name)
-        return
-
-        # previous_attacker = self.players[self.who_move - 1]
-
-
-
+        self.get_attacker().select_pokemon(pokemon_name)
 
     async def revive_pokemon(self, pokemon_name, is_donate):
         attacker = self.players[self.who_move]
@@ -154,12 +146,18 @@ class Game:
         return actions
 
     def end_move(self):
-        if self.who_move == len(self.players) - 1:
-            self.who_move = 0
-            self.update_last_move_time()  # start his move, reset move time
-            return
-        self.who_move += 1
-        self.update_last_move_time()
+        a = 1
+        for i in range(len(self.players)):
+            self.who_move = self.who_move + a if self.who_move + a < len(self.players) else 0
+            if self.is_player_has_pokemon(self.get_attacker()):
+                self.update_last_move_time()
+                break
+
+    @staticmethod
+    def is_player_has_pokemon(player: Player):
+        if not any(is_alive for pokemon, is_alive in player.pokemons_pool.items()):
+            return False
+        return True
 
     def update_last_move_time(self):
         self.get_attacker().last_move_time = time.time()
@@ -184,7 +182,7 @@ class Game:
         if len(self.players) == 2:
             return self.players[:1], self.players[1:]
         if len(self.players) == 4:
-            return self.players[:2], self.players[2:]
+            return self.players[0::2], self.players[1::2]
 
     def game_over_coz_flee(self, looser_id):
         # return ([winner], [loser])
@@ -219,25 +217,26 @@ class Game:
             return team2, team1
 
         if len(self.players) == 4:
-            if self.who_move in [0, 1]:
+            if self.who_move in [0, 2]:
                 return team1, team2
             return team2, team1
 
     def get_attacker(self) -> Optional[Player]:
         return self.players[self.who_move]
 
-    def set_attacker(self, player_id: int):
-        for i, player in enumerate(self.players):
-            if player.id == player_id:
-                self.who_move = i
-                return
-        raise Exception("Player not found")
+    def set_attacker(self, player_index: int):
+        self.who_move = player_index
 
     def is_player_attacks_now(self, player_id: int):
         return self.players[self.who_move].id == player_id
 
     def is_all_pokemons_selected(self) -> bool:
         return all(player.pokemon for player in self.players)
+
+    def player_need_choose_pokemon(self):
+        for player in self.players:
+            if not player.pokemon:
+                return player
 
     @classmethod
     def new(cls, players: [Player], bet: Optional[int], chat_id: int):

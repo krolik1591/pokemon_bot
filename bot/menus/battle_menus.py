@@ -12,7 +12,10 @@ def battle_menu(game: Game, latest_actions=None):
     players_text = []
     for index, player in enumerate(game.players):
         if player.pokemon:
-            players_text.append(_pokemon_text(player, index))
+            players_text.append(_pokemon_text(player, index, is_dead=False))
+        else:
+            players_text.append(_pokemon_text(player, index, is_dead=True))
+
     players_text = '\n\n'.join(players_text)
     actions_text = _actions_text(latest_actions)
 
@@ -39,14 +42,17 @@ def battle_menu(game: Game, latest_actions=None):
     return text, kb
 
 
-def _pokemon_text(player: Player, index):
+def _pokemon_text(player: Player, index, is_dead):
     pokemon = player.pokemon
+    emoji_team = const.BLUE_TEAM if index % 2 == 0 else const.RED_TEAM
+
+    if is_dead:
+        return f"<b>{emoji_team} {player.mention}</b>\nDEAD"
+
     link = f"<a href='{pokemon.url}'>{pokemon.name}</a>"
     shield_icon = "🛡" if pokemon.shield else ""
     sleeping_pills_icon = "💤" if player.sleeping_pills_counter is not None else ""
     power_increase_icon = "🔥" if pokemon.increase_dmg_by_card else ""
-
-    emoji_team = const.BLUE_TEAM if index % 2 == 0 else const.RED_TEAM
 
     return f"<b>{emoji_team}Lvl. {pokemon.lvl} {link} {TYPES_STR[pokemon.type]} - {player.mention}</b>\n" \
            f"{hp_bar(pokemon.hp, pokemon.max_hp)} {power_increase_icon} {shield_icon} {sleeping_pills_icon}"

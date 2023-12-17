@@ -128,6 +128,9 @@ class Player:
 
 
 def get_pokemons_pool():
+    # return {
+    #     'Pidgiotto': True,
+    # }
     pokemons = [dogemon.name for dogemon in DOGEMONS]
     random.shuffle(pokemons)
     return {dogemon: True for dogemon in pokemons[:3]}  # 3 random pokemons, True means that pokemon is alive
@@ -136,5 +139,4 @@ def get_pokemons_pool():
 def get_random_special():
     special_cards = SPECIAL_CARDS
     random.shuffle(special_cards)
-    return [REVIVE]
     return [special_cards[0]]

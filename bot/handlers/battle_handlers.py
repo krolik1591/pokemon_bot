@@ -141,7 +141,9 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
     if flood_limit:
         return await call.answer(f'Wait {int(flood_limit - time.time())} seconds!!!')
 
-    _, pokemon, game_id, change_first_move = call.data.split('|')
+    _, pokemon, game_id, who_next_move = call.data.split('|')
+
+    print('select_dogemon_menu', pokemon, game_id, who_next_move)
 
     game = await game_service.get_game(game_id)
 
@@ -150,7 +152,6 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
 
     # need to working `BACK` button
     if pokemon != 'None':
-        print([player.pokemon for player in game.players])
         game.select_pokemon(pokemon)
 
     if not game.is_all_pokemons_selected():
@@ -165,8 +166,8 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
     # both players selected pokemon
     if pokemon != 'None':
         game.end_move()
-    if change_first_move == 'True':
-        game.end_move()
+    if len(who_next_move) == 1:
+        game.who_move = int(who_next_move)
     await game_service.save_game(game)  # save game without end move - the last player to pick a pokemon attacks first
 
     text, kb = battle_menu(game)
@@ -182,6 +183,7 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
     _, action, game_id = call.data.split('|')
 
     game = await game_service.get_game(game_id)
+    print('who move', game.who_move)
 
     if not game.is_player_attacks_now(call.from_user.id):
         return await call.answer('Not your turn!')
@@ -215,7 +217,7 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     flood_limit = (await state.get_data()).get('flood_limit')
     if flood_limit:
         return await call.answer(f'Wait {int(flood_limit - time.time())} seconds!!!')
-    print(call.data.split('|'))
+
     _, is_special, item_name, game_id, defender_index = call.data.split('|')
 
     game = await game_service.get_game(game_id)
@@ -229,7 +231,8 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
             item_name = item_name.removesuffix(IS_DONATE_EMOJI) if is_donate else item_name
             special_name = special_by_emoji(item_name)
 
-            if special_name == const.REVIVE and defender_index == 'None':
+            to_revive = game.get_attacker().get_pokemons_to_revive()
+            if item_name in to_revive and defender_index == 'None':
                 actions = await game.revive_pokemon(special_name, is_donate)
 
             elif special_name == const.SLEEPING_PILLS or defender_index != 'None':
@@ -252,13 +255,13 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
                     kb = bot.menus.select_menus.select_defender_menu(game, item_name, is_special='F')
                     await try_to_edit_reply_markup(call, state, kb)
                     return
-            print([player.pokemon.name for player in game.players])
             actions = game.cast_spell(item_name, defender_index)
             game.end_move()
 
     except Exception as ex:
         return await call.answer('Cant cast it this round! ' + str(ex))
 
+    who_next_move = game.who_move
     await game_service.save_game(game)
 
     # check next player pokemons
@@ -269,7 +272,14 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
             await process_end_game(call, state, game, win_type='clear')
             return
 
-        text, kb = select_dogemon_menu(game, latest_actions=actions, change_first_move=True)
+        player = game.player_need_choose_pokemon()
+        if not any(is_alive for pokemon, is_alive in player.pokemons_pool.items()):
+            text, kb = battle_menu(game, latest_actions=actions)
+            await try_to_edit_caption(call, state, text, kb)
+            return
+        game.set_attacker(game.players.index(player))
+        await game_service.save_game(game)
+        text, kb = select_dogemon_menu(game, latest_actions=actions, who_next_move=who_next_move)
         return await try_to_edit_caption(call, state, text, kb)
 
     # continue battle if pokemons are ok
