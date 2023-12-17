@@ -164,6 +164,30 @@ async def increase_exclusive_win(tg_userid):
         )
 
 
+# pre-battle 2x2
+async def create_pre_battle(game_info):
+    game = await mongodb['pre_battle_2x2'].insert_one(game_info)
+    return str(game.inserted_id)
+
+
+async def get_pre_battle(game_id):
+    game_id = ObjectId(game_id)
+    game = await mongodb['pre_battle_2x2'].find_one({'_id': game_id})
+    return game
+
+
+async def update_pre_battle(game_id, game_info):
+    game_id = ObjectId(game_id)
+    await mongodb['pre_battle_2x2'].update_one(
+        {
+            '_id': game_id
+        },
+        {
+            '$set': game_info
+        }
+    )
+
+
 async def add_new_special(user_id):
     special = {
         'potion': 10,

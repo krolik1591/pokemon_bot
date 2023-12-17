@@ -15,6 +15,7 @@ from bot.data import const
 from bot.data.const import REWARD, PRIZE_POOL, MAX_USES_OF_SPECIAL_CARDS, IS_DONATE_EMOJI
 from bot.db import db
 from bot.REWORK_IT import pre_game_check, end_game, take_money_from_players
+from bot.db.methods import create_pre_battle, update_pre_battle, get_pre_battle
 from bot.menus import battle
 from bot.menus.battle_menus import battle_menu
 from bot.menus.special_menus import special_cards_menu, revive_pokemon_menu
@@ -47,12 +48,16 @@ async def group_battle(message: types.Message, state: FSMContext):
         return await message.answer(err)
 
     players = {
-        'blue': [message.from_user],
-        'red': []
+        'blue': [message.from_user.id],
+        'red': [],
+        str(message.from_user.id): message.from_user.first_name
     }
-    await state.update_data(players=players)
 
-    text, kb = bot.menus.waiting_menus.waiting_group_battle_menu(bet, players)
+    pre_battle_id = await create_pre_battle(players)
+    players['id'] = pre_battle_id
+    await update_pre_battle(pre_battle_id, players)
+
+    text, kb = bot.menus.waiting_menus.waiting_group_battle_menu(bet, players, pre_battle_id)
     image_bytes = get_image_bytes('image1.jpg')
 
     await message.answer_photo(
@@ -65,21 +70,22 @@ async def group_battle(message: types.Message, state: FSMContext):
 @router.callback_query(Text(startswith='group_battle|'))
 async def join_group_battle(call: types.CallbackQuery, state: FSMContext):
     print("join group battle")
-    _, bet, team = call.data.split('|')
+    _, bet, team, pre_battle_id = call.data.split('|')
 
     err = await pre_game_check(call.from_user, int(bet))
     if err:
         return await call.message.answer(err)
 
-    players: {[call.from_user]} = (await state.get_data()).get('players')
-    players[team].append(call.from_user)
-    await state.update_data(players=players)
+    players = await get_pre_battle(pre_battle_id)
+    players[team].append(call.from_user.id)
+    players[str(call.from_user.id)] = call.from_user.first_name
+    await update_pre_battle(pre_battle_id, players)
 
     if len(players['blue']) == 2 and len(players['red']) == 2:
-        await process_start_game(call, state, players, int(bet))
+        await process_start_game(call, state, players, int(bet), is_group=True)
         return
 
-    text, kb = bot.menus.waiting_menus.waiting_group_battle_menu(bet, players)
+    text, kb = bot.menus.waiting_menus.waiting_group_battle_menu(bet, players, pre_battle_id)
     await call.message.edit_caption(caption=text, reply_markup=kb)
 
 
@@ -339,14 +345,17 @@ async def cancel_battle(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
 
 
-async def process_start_game(call, state, players, bet):
+async def process_start_game(call, state, players, bet, is_group=False):
     players1 = []
     players2 = []
-    for index, player in enumerate(players['blue'] + players['red']):
+    for index, player_id in enumerate(players['blue'] + players['red']):
+        if is_group:
+            player = await state.bot.get_chat(player_id)
+
         if index % 2 == 0:
-            players1.append(await Player.new(player))
+            players1.append(await Player.new(await state.bot.get_chat(player_id)))
         else:
-            players2.append(await Player.new(player))
+            players2.append(await Player.new(await state.bot.get_chat(player_id)))
 
     game = Game.new(
         players1 + players2,
