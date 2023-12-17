@@ -24,7 +24,7 @@ def waiting_battle_menu(user: User, bet):
     return text, kb
 
 
-def waiting_group_battle_menu(user: User, bet, players):
+def waiting_group_battle_menu(bet, players):
     text_blue = 'Blue team:\n'
     text_red = 'Red team:\n'
     for blue_player in players['blue']:
@@ -40,7 +40,7 @@ def waiting_group_battle_menu(user: User, bet, players):
             InlineKeyboardButton(text=f'Join RED ({len(players["red"])}/2)', callback_data=f"group_battle|{bet}|red"),
 
         ],
-        [InlineKeyboardButton(text='Cancel', callback_data=f"cancel_battle|{user.id}")]
+        [InlineKeyboardButton(text='Cancel', callback_data=f"cancel_battle|{players['blue'][0].id}")],
     ])
 
     return text, kb

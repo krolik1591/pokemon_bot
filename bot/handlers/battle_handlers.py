@@ -47,7 +47,7 @@ async def group_battle(message: types.Message, state: FSMContext):
     }
     await state.update_data(players=players)
 
-    text, kb = battle.waiting_group_battle_menu(message.from_user, bet, players)
+    text, kb = battle.waiting_group_battle_menu(bet, players)
     image_bytes = get_image_bytes('image1.jpg')
 
     await message.answer_photo(
@@ -66,22 +66,16 @@ async def join_group_battle(call: types.CallbackQuery, state: FSMContext):
     if err:
         return await call.message.answer(err)
 
-    players = (await state.get_data()).get('players')
-    if len(players) == 4:
-        pass
-
-    players.append(call.from_user.id)
+    players: {[call.from_user]} = (await state.get_data()).get('players')
+    players[team].append(call.from_user)
     await state.update_data(players=players)
 
-    text, kb = battle.waiting_group_battle_menu(players[0], bet, [], [])
-    image_bytes = get_image_bytes('image1.jpg')
+    if len(players['blue']) == 2 and len(players['red']) == 2:
+        await process_start_game(call, state, players, int(bet))
+        return
 
-    await call.message.answer_photo(
-        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
-        caption=text,
-        reply_markup=kb
-    )
-
+    text, kb = battle.waiting_group_battle_menu(bet, players)
+    await call.message.edit_caption(caption=text, reply_markup=kb)
 
 
 @router.message(F.chat.type != "private", Text(startswith="/battle "))
@@ -129,33 +123,11 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
     if bet is not None:
         await take_money_from_players(player_1_id, call.from_user.id, bet)
 
-    game = Game.new(
-        [await Player.new(await state.bot.get_chat(player_1_id)), await Player.new(call.from_user)],
-        bet=bet,
-        chat_id=call.message.chat.id
-    )
-
-    game = await game_service.save_game(game)
-
-    await state.update_data(flood_limit=None)
-
-    await call.message.edit_caption(caption='Shuffling cards...')
-    await asyncio.sleep(1)
-    await call.message.edit_caption(caption='Game started!')
-    await asyncio.sleep(1)
-    await call.message.delete()
-
-    text, kb = battle.select_dogemon_menu(game, first_move=True)
-    image_bytes = get_image_bytes('image2.jpg')
-
-    msg = await call.message.answer_photo(
-        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
-        caption=text,
-        reply_markup=kb
-    )
-
-    game.set_msg_id(msg.message_id)
-    await game_service.save_game(game)
+    players = {
+        'blue': [await state.bot.get_chat(player_1_id)],
+        'red': [call.from_user]
+    }
+    await process_start_game(call, state, players, int(bet))
 
 
 @router.callback_query(Text(startswith='select_dogemon_menu|'))
@@ -226,7 +198,8 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
 
         if len(game.players) == 2:
             kb = special_cards_menu(game, donate_special)
-        return await try_to_edit_reply_markup(call, state, kb)
+            await try_to_edit_reply_markup(call, state, kb)
+        return
 
     if action == 'flee':
         return await process_end_game(call, state, game, win_type='flee')
@@ -326,6 +299,37 @@ async def cancel_battle(call: types.CallbackQuery, state: FSMContext):
         return await call.answer("It's not your msg!")
 
     await call.message.delete()
+
+
+async def process_start_game(call, state, players, bet):
+    game = Game.new(
+        [await Player.new(player) for player in players['blue']] + [await Player.new(player) for player in
+                                                                    players['red']],
+        bet=bet,
+        chat_id=call.message.chat.id
+    )
+
+    game = await game_service.save_game(game)
+
+    await state.update_data(flood_limit=None)
+
+    await call.message.edit_caption(caption='Shuffling cards...')
+    await asyncio.sleep(1)
+    await call.message.edit_caption(caption='Game started!')
+    await asyncio.sleep(1)
+    await call.message.delete()
+
+    text, kb = battle.select_dogemon_menu(game, first_move=True)
+    image_bytes = get_image_bytes('image2.jpg')
+
+    msg = await call.message.answer_photo(
+        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
+        caption=text,
+        reply_markup=kb
+    )
+
+    game.set_msg_id(msg.message_id)
+    await game_service.save_game(game)
 
 
 async def process_end_game(call, state, game, win_type):
