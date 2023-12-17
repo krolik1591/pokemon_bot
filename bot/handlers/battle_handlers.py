@@ -9,12 +9,14 @@ from aiogram import F, Router, exceptions, types
 from aiogram.filters import Text, Command
 from aiogram.fsm.context import FSMContext
 
+import bot.menus.select_menus
+import bot.menus.waiting_menus
 from bot.data.const import REWARD, PRIZE_POOL, MAX_USES_OF_SPECIAL_CARDS, IS_DONATE_EMOJI
 from bot.db import db
 from bot.REWORK_IT import pre_game_check, end_game, take_money_from_players
 from bot.menus import battle
-from bot.menus.battle_menus import battle_menu, revive_pokemon_menu, select_dogemon_menu, select_attack_menu, \
-    special_cards_menu
+from bot.menus.battle_menus import battle_menu, revive_pokemon_menu, special_cards_menu
+from bot.menus.select_menus import select_dogemon_menu, select_attack_menu
 from bot.utils import game_service
 from bot.models.game import Game
 from bot.models.player import Player
@@ -47,7 +49,7 @@ async def group_battle(message: types.Message, state: FSMContext):
     }
     await state.update_data(players=players)
 
-    text, kb = battle.waiting_group_battle_menu(bet, players)
+    text, kb = bot.menus.waiting_menus.waiting_group_battle_menu(bet, players)
     image_bytes = get_image_bytes('image1.jpg')
 
     await message.answer_photo(
@@ -74,7 +76,7 @@ async def join_group_battle(call: types.CallbackQuery, state: FSMContext):
         await process_start_game(call, state, players, int(bet))
         return
 
-    text, kb = battle.waiting_group_battle_menu(bet, players)
+    text, kb = bot.menus.waiting_menus.waiting_group_battle_menu(bet, players)
     await call.message.edit_caption(caption=text, reply_markup=kb)
 
 
@@ -96,7 +98,7 @@ async def start_battle(message: types.Message, state: FSMContext):
     if err:
         return await message.answer(err)
 
-    text, kb = battle.waiting_battle_menu(message.from_user, bet)
+    text, kb = bot.menus.waiting_menus.waiting_battle_menu(message.from_user, bet)
     image_bytes = get_image_bytes('image1.jpg')
 
     await message.answer_photo(
@@ -152,7 +154,7 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
         await game_service.save_game(game)
 
         # show this menu again for another player
-        text, kb = battle.select_dogemon_menu(game)
+        text, kb = bot.menus.select_menus.select_dogemon_menu(game)
         await try_to_edit_caption(call, state, text, kb)
         return
 
@@ -224,13 +226,13 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
                 actions = await game.revive_pokemon(item_name)
             else:
                 if defender_index == 'None':
-                    kb = battle.select_defender_menu(game, item_name, is_special='T')
+                    kb = bot.menus.select_menus.select_defender_menu(game, item_name, is_special='T')
                     await try_to_edit_reply_markup(call, state, kb)
                     return
                 actions = await game.use_special_card(item_name, defender_index)
         else:
             if defender_index == 'None':
-                kb = battle.select_defender_menu(game, item_name, is_special='F')
+                kb = bot.menus.select_menus.select_defender_menu(game, item_name, is_special='F')
                 await try_to_edit_reply_markup(call, state, kb)
                 return
             actions = game.cast_spell(item_name, defender_index)
@@ -327,7 +329,7 @@ async def process_start_game(call, state, players, bet):
     await asyncio.sleep(1)
     await call.message.delete()
 
-    text, kb = battle.select_dogemon_menu(game, first_move=True)
+    text, kb = bot.menus.select_menus.select_dogemon_menu(game, first_move=True)
     image_bytes = get_image_bytes('image2.jpg')
 
     msg = await call.message.answer_photo(
