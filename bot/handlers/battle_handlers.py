@@ -149,8 +149,6 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
 
     _, pokemon, game_id, who_next_move = call.data.split('|')
 
-    print('select_dogemon_menu', pokemon, game_id, who_next_move)
-
     game = await game_service.get_game(game_id)
 
     if not game.is_player_attacks_now(call.from_user.id):
@@ -249,6 +247,11 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
                 actions = await game.use_sleeping_pills(defender_index, is_donate)
 
             elif special_name == const.POTION:
+                # if defender_index == 'None':
+                #     kb = bot.menus.select_menus.select_defender_menu(game, special_name, is_special='T',
+                #                                                      is_donate=is_donate, is_enemy=False)
+                #     await try_to_edit_reply_markup(call, state, kb)
+                #     return
                 actions = await game.use_potion(special_name, is_donate)
 
             else:
@@ -394,8 +397,8 @@ async def process_end_game(call, state, game, win_type):
 
     if win_type == 'flee':
         winner_team, looser_team = game.game_over_coz_flee(call.from_user.id)
-        winners = '\n'.join([player.mention for player in winner_team])
-        loosers = '\n'.join([player.mention for player in looser_team])
+        winners = ' '.join([player.mention for player in winner_team])
+        loosers = ' '.join([player.mention for player in looser_team])
         text = f'{winners} won {reward} $POKECARD while {loosers} fled the battle and {burnt} will be burnt'
     elif win_type == 'clear':
         looser_team, winner_team = game.get_attacker_defencer_team()

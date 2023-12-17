@@ -20,7 +20,7 @@ def waiting_battle_menu(user: User, bet):
 
 def waiting_group_battle_menu(bet, players, pre_battle_id):
     text_blue = 'Blue team:\n'
-    text_red = 'Red team:\n'
+    text_red = 'Yellow team:\n'
     for blue_player_id in players['blue']:
         link = markdown.hlink(players[str(blue_player_id)], create_tg_link("user", id=blue_player_id))
         text_blue += f"     {link}\n"
