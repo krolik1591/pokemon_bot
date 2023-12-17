@@ -8,9 +8,8 @@ from aiogram.utils import markdown
 from aiogram.utils.link import create_tg_link
 
 from bot.data import const
-from bot.data.const import REVIVE_HP, SLEEPING_COUNTER, REVIVE
+from bot.data.const import REVIVE_HP, SLEEPING_COUNTER, REVIVE, SPECIAL_CARDS
 from bot.data.dogemons import DOGEMONS
-from bot.data.special_cards import SPECIAL_CARDS
 from bot.models.pokemon import Pokemon
 
 

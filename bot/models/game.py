@@ -2,6 +2,7 @@ import math
 import random
 import time
 from dataclasses import dataclass
+from pprint import pprint
 from typing import Optional
 
 from bot.data import const
@@ -32,14 +33,21 @@ class Game:
         self.msg_id = msg_id
 
     def select_pokemon(self, pokemon_name):
-        self.get_attacker().select_pokemon(pokemon_name)
+        attacker = self.get_attacker()
+        # if len(self.players) == 2:
+        attacker.select_pokemon(pokemon_name)
+        return
 
-    async def revive_pokemon(self, pokemon_name):
+        # previous_attacker = self.players[self.who_move - 1]
+
+
+
+
+    async def revive_pokemon(self, pokemon_name, is_donate):
         attacker = self.players[self.who_move]
 
-        if pokemon_name.endswith(IS_DONATE_EMOJI):
-            pokemon_name = await self.process_donate_special(attacker, pokemon_name, is_revive=True)
-            print(pokemon_name)
+        if is_donate:
+            await self.process_donate_special(attacker, pokemon_name, is_revive=True)
         else:
             attacker.special_cards.remove(REVIVE)
 
@@ -51,48 +59,49 @@ class Game:
         attacker.uses_of_special_cards += 1
         return actions
 
-    async def use_special_card(self, special_card: str, defender_index: str):
+    async def use_sleeping_pills(self, defender_index: str, is_donate: bool):
         attacker = self.get_attacker()
 
-        if special_card.endswith(IS_DONATE_EMOJI):
-            special_card = await self.process_donate_special(attacker, special_card, is_revive=False)
+        if is_donate:
+            await self.process_donate_special(attacker, const.SLEEPING_PILLS, is_revive=False)
+        else:
+            attacker.special_cards.remove(const.SLEEPING_PILLS)
+
+        actions = []
+
+        defender = self.players[int(defender_index)]
+        defender.set_sleeping_pills()
+        actions.append(f"{attacker.mention} use sleeping pills! "
+                       f"{defender.mention} next {const.SLEEPING_COUNTER} attack(s) will be cancelled")
+
+        attacker.uses_of_special_cards += 1
+        return actions
+
+    async def use_potion(self, special_card, is_donate):
+        attacker = self.get_attacker()
+        if is_donate:
+            await self.process_donate_special(attacker, special_card, is_revive=False)
         else:
             attacker.special_cards.remove(special_card)
 
         actions = []
-
-        if special_card == const.POTION:
-            heal_amount = attacker.use_poison()
-            actions.append(f"{attacker.mention} use potion and restored {math.floor(heal_amount)} hp")
-
-        elif special_card == const.SLEEPING_PILLS:
-            defender = self.players[int(defender_index)]
-            defender.set_sleeping_pills()
-            actions.append(f"{attacker.mention} use sleeping pills! "
-                           f"{defender.mention} next {const.SLEEPING_COUNTER} attack(s) will be cancelled")
-
-        else:
-            raise Exception("Unknown special card")
+        heal_amount = attacker.use_poison()
+        actions.append(f"{attacker.mention} use potion and restored {math.floor(heal_amount)} hp")
 
         attacker.uses_of_special_cards += 1
-
         return actions
 
     async def process_donate_special(self, attacker, special_card, is_revive):
-        new_special_name = special_card.removesuffix(IS_DONATE_EMOJI)
-
         if not is_revive:
             available_donate_cards = await self.db_service.get_purchased_cards(attacker.id)
-            if new_special_name not in available_donate_cards:
+            if special_card not in available_donate_cards:
                 raise Exception("Don't have this special card")
 
-            attacker.update_used_purchased_special_cards(new_special_name)
-            await self.db_service.subtract_special_card(attacker.id, new_special_name)
+            attacker.update_used_purchased_special_cards(special_card)
+            await self.db_service.subtract_special_card(attacker.id, special_card)
         else:
             attacker.update_used_purchased_special_cards(REVIVE)
             await self.db_service.subtract_special_card(attacker.id, REVIVE)
-
-        return new_special_name
 
     def get_player_by_id(self, player_id: int) -> Player:
         for player in self.players:
@@ -216,6 +225,13 @@ class Game:
 
     def get_attacker(self) -> Optional[Player]:
         return self.players[self.who_move]
+
+    def set_attacker(self, player_id: int):
+        for i, player in enumerate(self.players):
+            if player.id == player_id:
+                self.who_move = i
+                return
+        raise Exception("Player not found")
 
     def is_player_attacks_now(self, player_id: int):
         return self.players[self.who_move].id == player_id

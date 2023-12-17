@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from bot.data.const import BLUE_TEAM, RED_TEAM, IS_DONATE_EMOJI
 from bot.data.dogemons import DOGEMONS_MAP
 from bot.menus.utils_for_menus import _inline_btn, _timeout_btn, _pokemon_text_small, _actions_text, _columns
 from bot.models.game import Game
@@ -18,19 +19,21 @@ def select_dogemon_menu(game, first_move=False, latest_actions=None, change_firs
     select_pok_text = f'The first move is yours, {attacker.mention}, choose your PokéCard!' \
         if first_move else f'{attacker.mention} choose your PokéCard!'
 
-    attacker_team, defender_team = game.get_attacker_defencer_team()
     other_players = game.players
     other_players_text = []
-    for player in other_players:
+    for index, player in enumerate(other_players):
+        emoji_team = BLUE_TEAM if index % 2 == 0 else RED_TEAM
         if player.pokemon:
-            other_players_text.append(f"🔶{player.name} plays as: {_pokemon_text_small(player.pokemon)}\n")
+            other_players_text.append(f"{emoji_team}{player.name} plays as: {_pokemon_text_small(player.pokemon)}\n")
         else:
-            other_players_text.append(f"🔶{player.name} plays as: waiting...\n")
+            other_players_text.append(f"{emoji_team}{player.name} plays as: waiting...\n")
 
     text = f"{actions_text}\n\n{''.join(other_players_text)}\n{select_pok_text}"
 
+    print(attacker.pokemons_pool)
     pokemons_btns = [_pokemon_btn(pokemon_name) for pokemon_name, is_alive in attacker.pokemons_pool.items() if
                      is_alive]
+    print(pokemons_btns)
     pokemons_btns = _columns(pokemons_btns, 1)  # 1 column
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -41,19 +44,23 @@ def select_dogemon_menu(game, first_move=False, latest_actions=None, change_firs
     return text, kb
 
 
-def select_defender_menu(game: Game, item_name, is_special: str):
+def select_defender_menu(game: Game, item_name, is_special: str, is_donate=False):
     print('select_defender_menu')
     attacker_team, defender_team = game.get_attacker_defencer_team()
-
-    # actions_text = _actions_text(latest_actions)
-    # text = f"{actions_text}\n\n"
-    # text = f"{attacker_team[0].mention}, choose your target!"
-
+    print([player.pokemon.name for player in game.players])
+    print([player.pokemon.name for player in defender_team])
     defenders_btns = []
     for defender in defender_team:
-        defender_index = game.players.index(defender_team[0])
+        defender_index = game.players.index(defender)
         text = f"{defender.name} ({_pokemon_text_small(defender.pokemon, is_link=True)})\n"
-        callback_data = f"fight|{is_special}|{item_name}|{game.game_id}|F|{defender_index}"
+
+        print(defender.pokemon.name, defender_index)
+
+        if is_donate:
+            callback_data = f"fight|{is_special}|{item_name}{IS_DONATE_EMOJI}|{game.game_id}|{defender_index}"
+        else:
+            callback_data = f"fight|{is_special}|{item_name}|{game.game_id}|{defender_index}"
+
         defenders_btns.append(_inline_btn(text, callback_data))
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -77,9 +84,9 @@ def select_attack_menu(game: Game):
     def _spell_btn(spell: Spell):
         spell_icon = '🛡' if spell.is_defence else f'{spell.attack}⚔'
         btn_text = f'{spell.name} ({spell_icon}) [x{spell.count}]'
-        # ... is_special ..... is_revive
+        # ... is_special
         return InlineKeyboardButton(text=btn_text,
-                                    callback_data=f"fight|F|{spell.name}|{game.game_id}|F|{defender_index}")
+                                    callback_data=f"fight|F|{spell.name}|{game.game_id}|{defender_index}")
 
     spells = game.get_attacker().pokemon.spells
 

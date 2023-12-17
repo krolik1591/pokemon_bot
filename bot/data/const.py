@@ -16,8 +16,17 @@ PRIZE_POOL = 0.05
 
 # name special cards
 # TURBO_BONUS card name is in bot/data/special_cards.py
-POTION = "❤️‍🔥 Potion"
-SLEEPING_PILLS = "💊 Sleeping pills"
-REVIVE = "🚑 Revive"
+POTION = "Potion"
+SLEEPING_PILLS = "Sleeping pills"
+REVIVE = "Revive"
 
+SPECIAL_CARDS = [REVIVE, POTION, SLEEPING_PILLS]
+SPECIAL_EMOJI = {
+    POTION: '❤️‍🔥',
+    SLEEPING_PILLS: '💊',
+    REVIVE: '🚑',
+}
 IS_DONATE_EMOJI = '💵'
+
+BLUE_TEAM = '🔹'
+RED_TEAM = '🔸'

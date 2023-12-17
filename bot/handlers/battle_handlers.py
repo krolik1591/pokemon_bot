@@ -11,16 +11,19 @@ from aiogram.fsm.context import FSMContext
 
 import bot.menus.select_menus
 import bot.menus.waiting_menus
+from bot.data import const
 from bot.data.const import REWARD, PRIZE_POOL, MAX_USES_OF_SPECIAL_CARDS, IS_DONATE_EMOJI
 from bot.db import db
 from bot.REWORK_IT import pre_game_check, end_game, take_money_from_players
 from bot.menus import battle
-from bot.menus.battle_menus import battle_menu, revive_pokemon_menu, special_cards_menu
+from bot.menus.battle_menus import battle_menu
+from bot.menus.special_menus import special_cards_menu, revive_pokemon_menu
 from bot.menus.select_menus import select_dogemon_menu, select_attack_menu
 from bot.utils import game_service
 from bot.models.game import Game
 from bot.models.player import Player
 from bot.utils.config_reader import config
+from bot.utils.other import special_by_emoji
 
 router = Router()
 
@@ -147,6 +150,7 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
 
     # need to working `BACK` button
     if pokemon != 'None':
+        print([player.pokemon for player in game.players])
         game.select_pokemon(pokemon)
 
     if not game.is_all_pokemons_selected():
@@ -208,12 +212,11 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
 
 @router.callback_query(Text(startswith='fight|'))
 async def fight_attack(call: types.CallbackQuery, state: FSMContext):
-    print('fight|')
     flood_limit = (await state.get_data()).get('flood_limit')
     if flood_limit:
         return await call.answer(f'Wait {int(flood_limit - time.time())} seconds!!!')
-
-    _, is_special, item_name, game_id, is_revive, defender_index = call.data.split('|')
+    print(call.data.split('|'))
+    _, is_special, item_name, game_id, defender_index = call.data.split('|')
 
     game = await game_service.get_game(game_id)
 
@@ -222,19 +225,34 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
 
     try:
         if is_special == "T":
-            if is_revive == "T":
-                actions = await game.revive_pokemon(item_name)
-            else:
+            is_donate = True if item_name.endswith(IS_DONATE_EMOJI) else False
+            item_name = item_name.removesuffix(IS_DONATE_EMOJI) if is_donate else item_name
+            special_name = special_by_emoji(item_name)
+
+            if special_name == const.REVIVE and defender_index == 'None':
+                actions = await game.revive_pokemon(special_name, is_donate)
+
+            elif special_name == const.SLEEPING_PILLS or defender_index != 'None':
                 if defender_index == 'None':
-                    kb = bot.menus.select_menus.select_defender_menu(game, item_name, is_special='T')
+                    kb = bot.menus.select_menus.select_defender_menu(game, special_name, is_special='T', is_donate=is_donate)
                     await try_to_edit_reply_markup(call, state, kb)
                     return
-                actions = await game.use_special_card(item_name, defender_index)
+                actions = await game.use_sleeping_pills(defender_index, is_donate)
+
+            elif special_name == const.POTION:
+                actions = await game.use_potion(special_name, is_donate)
+
+            else:
+                raise Exception('Unknown special card!')
         else:
-            if defender_index == 'None':
-                kb = bot.menus.select_menus.select_defender_menu(game, item_name, is_special='F')
-                await try_to_edit_reply_markup(call, state, kb)
-                return
+            attacker = game.get_attacker()
+            spell = attacker.pokemon.get_spell_by_name(item_name)
+            if not spell.is_defence:
+                if defender_index == 'None':
+                    kb = bot.menus.select_menus.select_defender_menu(game, item_name, is_special='F')
+                    await try_to_edit_reply_markup(call, state, kb)
+                    return
+            print([player.pokemon.name for player in game.players])
             actions = game.cast_spell(item_name, defender_index)
             game.end_move()
 
@@ -312,9 +330,16 @@ async def cancel_battle(call: types.CallbackQuery, state: FSMContext):
 
 
 async def process_start_game(call, state, players, bet):
+    players1 = []
+    players2 = []
+    for index, player in enumerate(players['blue'] + players['red']):
+        if index % 2 == 0:
+            players1.append(await Player.new(player))
+        else:
+            players2.append(await Player.new(player))
+
     game = Game.new(
-        [await Player.new(player) for player in players['blue']] + [await Player.new(player) for player in
-                                                                    players['red']],
+        players1 + players2,
         bet=bet,
         chat_id=call.message.chat.id
     )
