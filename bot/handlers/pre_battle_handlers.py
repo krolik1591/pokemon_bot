@@ -197,7 +197,8 @@ async def process_start_game(call, state, players: [int], bet):
     await asyncio.sleep(1)
     await call.message.delete()
 
-    text, kb = bot.menus.select_menus.select_dogemon_menu(game, first_move=True)
+    who_select = game.who_doesnt_select_pokemon()
+    text, kb = bot.menus.select_menus.select_dogemon_menu(game, who_select, first_move=True)
     image_bytes = get_image_bytes('image2.jpg') if len(players) == 2 else get_image_bytes('image3.jpg')
 
     msg = await call.message.answer_photo(

@@ -9,7 +9,7 @@ MAX_USES_OF_SPECIAL_CARDS = 3  # how many times player can use special cards
 
 ADDITION_DMG_BY_POKEMON_TYPE = (3, 8)  # how many dmg will increase by pokemon type
 
-MAX_ACTIVE_GAMES = 2
+MAX_ACTIVE_GAMES = 5
 
 REWARD = 0.95
 PRIZE_POOL = 0.05

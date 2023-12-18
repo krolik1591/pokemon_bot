@@ -23,6 +23,8 @@ class Player:
     last_move_time: float  # unix time of last meaningful move (successful attack)
     pokemon: Optional[Pokemon] = None  # active pokemon
 
+    is_dead: bool = False
+
     uses_of_special_cards: int = 0  # number of used special cards
     used_purchased_special_cards: [str] = field(default_factory=list)  # special cards that were purchased
     sleeping_pills_counter: [int] = None  # sleeping_pills_counter for sleeping pills
@@ -86,7 +88,8 @@ class Player:
             sleeping_pills_counter=None,
             revived_pokemon=None,
             uses_of_special_cards=0,
-            used_purchased_special_cards=[]
+            used_purchased_special_cards=[],
+            is_dead=False
         )
 
     def to_mongo(self):
@@ -100,7 +103,8 @@ class Player:
             "sleeping_pills_counter": self.sleeping_pills_counter if self.sleeping_pills_counter else None,
             "revived_pokemon": self.revived_pokemon if self.revived_pokemon else None,
             "uses_of_special_cards": self.uses_of_special_cards,
-            "used_purchased_special_cards": self.used_purchased_special_cards
+            "used_purchased_special_cards": self.used_purchased_special_cards,
+            "is_dead": self.is_dead
         }
 
     @classmethod
@@ -115,7 +119,8 @@ class Player:
             sleeping_pills_counter=mongo_data["sleeping_pills_counter"],
             revived_pokemon=mongo_data["revived_pokemon"],
             uses_of_special_cards=mongo_data["uses_of_special_cards"],
-            used_purchased_special_cards=mongo_data["used_purchased_special_cards"]
+            used_purchased_special_cards=mongo_data["used_purchased_special_cards"],
+            is_dead=mongo_data["is_dead"]
         )
 
     def use_poison(self):
@@ -128,6 +133,10 @@ class Player:
 
 
 def get_pokemons_pool():
+    # return {
+    #     'Snorlex': True,
+    #     'Pidgei': True,
+    # }
     pokemons = [dogemon.name for dogemon in DOGEMONS]
     random.shuffle(pokemons)
     return {dogemon: True for dogemon in pokemons[:3]}  # 3 random pokemons, True means that pokemon is alive

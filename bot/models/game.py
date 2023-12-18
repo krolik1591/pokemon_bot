@@ -32,11 +32,16 @@ class Game:
     def set_msg_id(self, msg_id):
         self.msg_id = msg_id
 
-    def select_pokemon(self, pokemon_name):
-        self.get_attacker().select_pokemon(pokemon_name)
+    def select_pokemon(self, pokemon_name, player):
+        player.select_pokemon(pokemon_name)
+
+    def get_player_by_id(self, player_id):
+        for player in self.players:
+            if player.id == player_id:
+                return player
 
     async def revive_pokemon(self, pokemon_name, is_donate):
-        attacker = self.players[self.who_move]
+        attacker = self.get_attacker()
 
         if is_donate:
             await self.process_donate_special(attacker, pokemon_name, is_revive=True)
@@ -44,9 +49,8 @@ class Game:
             attacker.special_cards.remove(REVIVE)
 
         actions = []
-        if pokemon_name in attacker.get_pokemons_to_revive():
-            attacker.revive_pokemon(pokemon_name)
-            actions.append(f"{attacker.mention} revived {pokemon_name}")
+        attacker.revive_pokemon(pokemon_name)
+        actions.append(f"{attacker.mention} revived {pokemon_name}")
 
         attacker.uses_of_special_cards += 1
         return actions
@@ -141,6 +145,12 @@ class Game:
         is_pokemon_dead = defender.attack_pokemon(dmg)
         actions.append(f"{attacker.mention} dealt {dmg} dmg by {spell.name}")
         if is_pokemon_dead:
+            pokemon_to_select = False
+            for pokemon, is_alive in defender.pokemons_pool.items():
+                if is_alive:
+                    pokemon_to_select = True
+                    break
+            defender.is_dead = True if not pokemon_to_select else False
             actions.append(f"{is_pokemon_dead.name} dead :(")
 
         return actions
@@ -221,6 +231,12 @@ class Game:
                 return team1, team2
             return team2, team1
 
+    def get_clear_winners(self):
+        team1, team_2 = self.get_attacker_defencer_team()
+        team_winner = team1 if self.is_team_lose(team_2) else team_2
+        team_looser = team_2 if self.is_team_lose(team_2) else team1
+        return team_winner, team_looser
+
     def get_attacker(self) -> Optional[Player]:
         return self.players[self.who_move]
 
@@ -231,12 +247,15 @@ class Game:
         return self.players[self.who_move].id == player_id
 
     def is_all_pokemons_selected(self) -> bool:
-        return all(player.pokemon for player in self.players)
+        return all(player.pokemon for player in self.players if not player.is_dead)
 
-    def player_need_choose_pokemon(self):
+    def who_doesnt_select_pokemon(self):
         for player in self.players:
-            if not player.pokemon:
+            if not player.pokemon and not player.is_dead:
                 return player
+        return None
+
+
 
     @classmethod
     def new(cls, players: [Player], bet: Optional[int], chat_id: int):

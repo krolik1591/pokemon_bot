@@ -25,8 +25,12 @@ def _inline_btn(text, callback_data):
     return [InlineKeyboardButton(text=text, callback_data=callback_data)]
 
 
-def _timeout_btn(game_id):
-    return InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"timeout|{game_id}")
+def _back_btn(game_id):
+    return InlineKeyboardButton(text='🔙 Back', callback_data=f"to_battle_menu|{game_id}")
+
+
+def _timeout_btn(game_id, player_id):
+    return InlineKeyboardButton(text='⌛️ Timeout', callback_data=f"timeout|{game_id}|{player_id}")
 
 
 def _flee_btn(game_id):

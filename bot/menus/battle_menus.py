@@ -25,16 +25,17 @@ def battle_menu(game: Game, latest_actions=None):
            f"{players_text}\n\n" \
            f"{actions_text}"
 
+    now_attacks_text = player.name if not player.pokemon else f"{player.name} ({player.pokemon.name})"
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text=f"Now attacks: {player.name} ({player.pokemon.name})", callback_data="nothing"),
+            InlineKeyboardButton(text=f"Now attacks: {now_attacks_text} {game.who_move}", callback_data="nothing"),
         ],
         [
             InlineKeyboardButton(text='⚔ Attack', callback_data=f"fight_menu|attack|{game.game_id}"),
             InlineKeyboardButton(text='🎒 PokéBag', callback_data=f"fight_menu|special_cards|{game.game_id}"),
         ],
         [
-            _timeout_btn(game.game_id),
+            _timeout_btn(game.game_id, player.id),
             _flee_btn(game.game_id),
         ],
     ])

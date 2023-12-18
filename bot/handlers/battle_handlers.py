@@ -23,13 +23,13 @@ from bot.utils.other import special_by_emoji
 router = Router()
 
 
-@router.callback_query(Text(startswith='select_dogemon_menu|'))
+@router.callback_query(Text(startswith='select_pok|'))
 async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
     flood_limit = (await state.get_data()).get('flood_limit')
     if flood_limit:
         return await call.answer(f'Wait {int(flood_limit - time.time())} seconds!!!')
 
-    _, pokemon, game_id, who_next_move = call.data.split('|')
+    _, pokemon, game_id, who_need_pok = call.data.split('|')
 
     game = await game_service.get_game(game_id)
 
@@ -41,20 +41,34 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
         game.select_pokemon(pokemon)
 
     if not game.is_all_pokemons_selected():
-        game.end_move()  # end move ONLY if not all pokemons are selected
-        await game_service.save_game(game)
+        print('not all pokemons selected')
 
         # show this menu again for another player
-        text, kb = bot.menus.select_menus.select_dogemon_menu(game)
+        who_select = game.who_doesnt_select_pokemon()
+        print(who_select)
+        text, kb = bot.menus.select_menus.select_dogemon_menu(game, who_select)
         await try_to_edit_caption(call, state, text, kb)
         return
 
-    # both players selected pokemon
-    if pokemon != 'None':
-        game.end_move()
-    if len(who_next_move) == 1:
-        game.who_move = int(who_next_move)
-    await game_service.save_game(game)  # save game without end move - the last player to pick a pokemon attacks first
+    text, kb = battle_menu(game)
+    await try_to_edit_caption(call, state, text, kb)
+
+
+@router.callback_query(Text(startswith='to_battle_menu'))
+async def to_battle_menu(call: types.CallbackQuery, state: FSMContext):
+    flood_limit = (await state.get_data()).get('flood_limit')
+    if flood_limit:
+        return await call.answer(f'Wait {int(flood_limit - time.time())} seconds!!!')
+    _, game_id = call.data.split('|')
+
+    game = await game_service.get_game(game_id)
+
+    if call.from_user.id != game.get_attacker().id:
+        return await call.answer('Not your turn!')
+
+    players_id = [player.id for player in game.players]
+    if call.from_user.id not in players_id:
+        return await call.answer('You are not in this game!')
 
     text, kb = battle_menu(game)
     await try_to_edit_caption(call, state, text, kb)
@@ -120,11 +134,11 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
 
             to_revive = game.get_attacker().get_pokemons_to_revive()
             if item_name in to_revive and defender_index == 'None':
-                actions = await game.revive_pokemon(special_name, is_donate)
+                actions = await game.revive_pokemon(item_name, is_donate)
 
             elif special_name == const.SLEEPING_PILLS or defender_index != 'None':
                 if defender_index == 'None':
-                    kb = bot.menus.select_menus.select_defender_menu(game, special_name, is_special='T', is_donate=is_donate)
+                    kb = bot.menus.select_menus.select_defender_menu(game, special_name, is_special=True, is_donate=is_donate)
                     await try_to_edit_reply_markup(call, state, kb)
                     return
                 actions = await game.use_sleeping_pills(defender_index, is_donate)
@@ -141,7 +155,7 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
                 return await call.answer('You have no more spells of this type!')
             if not spell.is_defence:
                 if defender_index == 'None':
-                    kb = bot.menus.select_menus.select_defender_menu(game, item_name, is_special='F')
+                    kb = bot.menus.select_menus.select_defender_menu(game, item_name, is_special=False)
                     await try_to_edit_reply_markup(call, state, kb)
                     return
             actions = game.cast_spell(item_name, defender_index)
@@ -150,26 +164,20 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
     except Exception as ex:
         return await call.answer('Cant cast it this round! ' + str(ex))
 
-    who_next_move = game.who_move
     await game_service.save_game(game)
 
     # check next player pokemons
     if not game.is_all_pokemons_selected():
+        player = game.who_doesnt_select_pokemon()
 
-        is_game_over = game.is_game_over()
-        if is_game_over:
-            await process_end_game(call, state, game, win_type='clear')
-            return
-
-        player = game.player_need_choose_pokemon()
-        if not any(is_alive for pokemon, is_alive in player.pokemons_pool.items()):
-            text, kb = battle_menu(game, latest_actions=actions)
-            await try_to_edit_caption(call, state, text, kb)
-            return
-        game.set_attacker(game.players.index(player))
         await game_service.save_game(game)
-        text, kb = select_dogemon_menu(game, latest_actions=actions, who_next_move=who_next_move)
+        text, kb = select_dogemon_menu(game, player, latest_actions=actions)
         return await try_to_edit_caption(call, state, text, kb)
+
+    is_game_over = game.is_game_over()
+    if is_game_over:
+        await process_end_game(call, state, game, win_type='clear')
+        return
 
     # continue battle if pokemons are ok
     text, kb = battle_menu(game, latest_actions=actions)
@@ -204,7 +212,8 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
     if flood_limit:
         return await call.answer(f'Wait {int(flood_limit - time.time())} seconds!!!')
 
-    _, game_id = call.data.split('|')
+    _, game_id, whos_attack = call.data.split('|')
+
     game = await game_service.get_game(game_id)
 
     _, defender_team = game.get_attacker_defencer_team()
@@ -228,7 +237,7 @@ async def process_end_game(call, state, game, win_type):
         winner_team, looser_team = game.game_over_coz_flee(call.from_user.id)
         text = f'{to_mention(winner_team)} won {reward} $POKECARD while {to_mention(looser_team)} fled the battle and {burnt} will be burnt'
     elif win_type == 'clear':
-        looser_team, winner_team = game.get_attacker_defencer_team()
+        winner_team, looser_team = game.get_clear_winners()
         text = f'{to_mention(winner_team)} won {reward} $POKECARD. {to_mention(looser_team)} has no PokéCards left'
     elif win_type == 'timeout':
         winner_team, looser_team = game.is_game_over_coz_timeout()

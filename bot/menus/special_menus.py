@@ -2,15 +2,16 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from bot.data.const import SPECIAL_EMOJI, IS_DONATE_EMOJI
 from bot.data.dogemons import DOGEMONS_MAP
-from bot.menus.utils_for_menus import set_callback_special, _inline_btn, _timeout_btn, _pokemon_text_small
+from bot.menus.utils_for_menus import set_callback_special, _inline_btn, _timeout_btn, _pokemon_text_small, _back_btn
 from bot.models.game import Game
 
 
 def special_cards_menu(game: Game, donate_special: list):
-    attacker, defender = game.get_attacker_defencer_team()
-    defender_index = game.players.index(defender[0]) if len(game.players) == 2 else None
+    _, defender_team = game.get_attacker_defencer_team()
+    attacker = game.get_attacker()
+    defender_index = game.players.index(defender_team[0]) if len(game.players) == 2 else None
 
-    print('')
+    print('random special cards: ', attacker.special_cards)
     special_btns = []
     if len(attacker[0].special_cards) == 1:
         text = f"{SPECIAL_EMOJI[attacker[0].special_cards[0]]} {attacker[0].special_cards[0]}"
@@ -25,8 +26,8 @@ def special_cards_menu(game: Game, donate_special: list):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         *special_btns,
         [
-            InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon_menu|None|{game.game_id}|False"),
-            _timeout_btn(game.game_id),
+            _back_btn(game.game_id),
+            _timeout_btn(game.game_id, game.get_attacker().id),
         ],
     ])
 
@@ -53,8 +54,8 @@ def revive_pokemon_menu(game: Game, pokemons_to_revive, is_donate):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         revive_btns,
         [
-            InlineKeyboardButton(text='🔙 Back', callback_data=f"select_dogemon_menu|None|{game.game_id}|False"),
-            _timeout_btn(game.game_id),
+            _back_btn(game.game_id),
+            _timeout_btn(game.game_id, game.get_attacker().id),
         ],
     ])
 

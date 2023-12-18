@@ -219,6 +219,6 @@ if __name__ == '__main__':
         #  815040834]
         # x = await get_active_game(357108179)
         # await lower_item(357108179, 'potion')
-        await replace_user_id(555468239, 6458187211)
+        await replace_user_id(1450223338, 185520398)
 
     asyncio.run(main())
