@@ -70,10 +70,7 @@ async def get_game(game_id_obj):
 
 async def get_active_games(tg_userid):
     game = await mongodb['games'].find({
-        '$or': [
-            {'player1.id': tg_userid},
-            {'player2.id': tg_userid}
-        ],
+        'players': {'$elemMatch': {'id': tg_userid}},
         'winner': None
     },
         sort=[('creation_time', -1)]).to_list(length=None)
@@ -210,8 +207,8 @@ if __name__ == '__main__':
     async def main():
         # x = await get_active_game(357108179)
         # await lower_item(357108179, 'potion')
-        x = await find(815040834)
-        print(x['items'])
+        x = await get_active_games(357108179)
+        print(x)
 
 
     asyncio.run(main())

@@ -135,8 +135,8 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
         await take_money_from_players(player_1_id, call.from_user.id, bet)
 
     players = {
-        'blue': [await state.bot.get_chat(player_1_id)],
-        'red': [call.from_user]
+        'blue': [player_1_id],
+        'red': [call.from_user.id]
     }
     await process_start_game(call, state, players, int(bet))
 
@@ -247,11 +247,6 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
                 actions = await game.use_sleeping_pills(defender_index, is_donate)
 
             elif special_name == const.POTION:
-                # if defender_index == 'None':
-                #     kb = bot.menus.select_menus.select_defender_menu(game, special_name, is_special='T',
-                #                                                      is_donate=is_donate, is_enemy=False)
-                #     await try_to_edit_reply_markup(call, state, kb)
-                #     return
                 actions = await game.use_potion(special_name, is_donate)
 
             else:
@@ -352,8 +347,8 @@ async def process_start_game(call, state, players, bet, is_group=False):
     players1 = []
     players2 = []
     for index, player_id in enumerate(players['blue'] + players['red']):
-        if is_group:
-            player = await state.bot.get_chat(player_id)
+        # if is_group:
+        #     player = await state.bot.get_chat(player_id)
 
         if index % 2 == 0:
             players1.append(await Player.new(await state.bot.get_chat(player_id)))

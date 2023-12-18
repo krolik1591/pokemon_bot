@@ -46,17 +46,22 @@ async def cancel_games(message: types.Message, state: FSMContext):
         await message.answer('There are no active games')
 
     for game in active_games:
+        if len(game['players']) == 4:
+            continue
+
         game_id = str(game['_id'])
         game = await game_service.get_game(game_id)
-        winner, looser = game.game_over_coz_flee(message.from_user.id)
-        await end_game(winner.id, game)
+        winner_team, looser_team = game.game_over_coz_flee(message.from_user.id)
+        await end_game([winner.id for winner in winner_team], game)
 
-        pool = game.bet * 2 if game.bet else 0
+        pool = game.bet * len(game.players) if game.bet else 0
         reward = math.floor(pool * REWARD)
 
-        text = f'Game msg delete cuz {looser.mention} canceled all games.\n\nWinner: {winner.mention}.\nWinner reward: {reward} $POKECARD.'
+        looser_mention = [looser.mention for looser in looser_team]
+        winner_mention = [winner.mention for winner in winner_team]
+        text = f'Game msg delete cuz {", ".join(looser_mention)} canceled all games.\n\nWinner: {", ".join(winner_mention)}.\nWinner reward: {reward} $POKECARD.'
         await state.bot.edit_message_caption(caption=text, chat_id=game.chat_id, message_id=game.msg_id)
-        await message.answer(f'{winner.mention} win, cuz {looser.mention} canceled all games.\n\nWinner reward: {reward} $POKECARD.')
+        await message.answer(f'{", ".join(winner_mention)} win, cuz {", ".join(looser_mention)} canceled all 1x1 games.\n\nWinner reward: {reward} $POKECARD.')
 
         # if bot admin
-        await kick_user(state, game.chat_id, looser, winner)
+        await kick_user(state, game.chat_id, looser_team, winner_team)

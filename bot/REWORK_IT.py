@@ -29,7 +29,7 @@ async def take_money_from_players(player1_id, player2_id, bet):
     await db.withdraw_tokens(player2_id, bet)
 
 
-async def end_game(winner_ids: [], game: Game):
+async def end_game(winner_ids: [int], game: Game):
     await db.update_game(game.game_id, {'winner': winner_ids})
 
     if game.bet is None:
