@@ -201,14 +201,24 @@ async def get_user(user_id):
 async def lower_item(user_id, item):
     await mongodb['users'].update_one({'tg_userid': user_id}, {'$inc': {'items.' + item: -1}})
 
+
+async def get_all_user_ids():
+    users = await mongodb['users'].find().to_list(length=None)
+    return [user['tg_userid'] for user in users]
+
+
+async def replace_user_id(user_id, new_user_id):
+    await mongodb['users'].update_one({'tg_userid': user_id}, {'$set': {'tg_userid': new_user_id}})
+
 if __name__ == '__main__':
     import asyncio
 
     async def main():
+        # [99999, 1530178004, 1020019442, 555468239, 1450223338, 5752293067.0, 1388014024, 5416704770.0, 6140711485.0,
+        #  6965984728.0, 6696388448.0, 5240572244.0, 5740566231.0, 6167400573.0, 6056529717.0, 99999, 357108179,
+        #  815040834]
         # x = await get_active_game(357108179)
         # await lower_item(357108179, 'potion')
-        x = await get_user_balance(357108179)
-        print(x)
-
+        await replace_user_id(555468239, 6458187211)
 
     asyncio.run(main())

@@ -137,6 +137,8 @@ async def fight_attack(call: types.CallbackQuery, state: FSMContext):
         else:
             attacker = game.get_attacker()
             spell = attacker.pokemon.get_spell_by_name(item_name)
+            if spell.count == 0:
+                return await call.answer('You have no more spells of this type!')
             if not spell.is_defence:
                 if defender_index == 'None':
                     kb = bot.menus.select_menus.select_defender_menu(game, item_name, is_special='F')

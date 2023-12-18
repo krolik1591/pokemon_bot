@@ -20,7 +20,7 @@ from bot.utils.other import get_mention
 router = Router()
 
 
-@router.message(F.chat.type != "private", Text(startswith="/gb "))
+@router.message(F.chat.type != "private", Text(startswith="/gbattle "))
 async def group_battle(message: types.Message, state: FSMContext):
     print("start group battle")
     available_chats = config.available_chat_ids.split(',')
@@ -28,7 +28,7 @@ async def group_battle(message: types.Message, state: FSMContext):
         return
 
     try:
-        bet = int(message.text.removeprefix('/gb '))
+        bet = int(message.text.removeprefix('/gbattle '))
         if bet <= 0:
             raise ValueError
     except ValueError:
@@ -198,7 +198,7 @@ async def process_start_game(call, state, players: [int], bet):
     await call.message.delete()
 
     text, kb = bot.menus.select_menus.select_dogemon_menu(game, first_move=True)
-    image_bytes = get_image_bytes('image2.jpg')
+    image_bytes = get_image_bytes('image2.jpg') if len(players) == 2 else get_image_bytes('image3.jpg')
 
     msg = await call.message.answer_photo(
         photo=types.BufferedInputFile(image_bytes, filename="image1.png"),

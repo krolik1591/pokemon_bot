@@ -10,6 +10,7 @@ def special_cards_menu(game: Game, donate_special: list):
     attacker, defender = game.get_attacker_defencer_team()
     defender_index = game.players.index(defender[0]) if len(game.players) == 2 else None
 
+    print('')
     special_btns = []
     if len(attacker[0].special_cards) == 1:
         text = f"{SPECIAL_EMOJI[attacker[0].special_cards[0]]} {attacker[0].special_cards[0]}"
