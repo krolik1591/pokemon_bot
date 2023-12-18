@@ -1,144 +1,26 @@
 import asyncio
 import math
-import os
 import time
-from pathlib import Path
-from pprint import pprint
 
-from aiogram import F, Router, exceptions, types
-from aiogram.filters import Text, Command
+from aiogram import Router, exceptions, types
+from aiogram.filters import Text
 from aiogram.fsm.context import FSMContext
 
 import bot.menus.select_menus
 import bot.menus.waiting_menus
 from bot.data import const
 from bot.data.const import REWARD, PRIZE_POOL, MAX_USES_OF_SPECIAL_CARDS, IS_DONATE_EMOJI
-from bot.db import db
-from bot.REWORK_IT import pre_game_check, end_game, take_money_from_players
-from bot.db.methods import create_pre_battle, update_pre_battle, get_pre_battle
-from bot.menus import battle
+from bot.db import db, methods as db
 from bot.menus.battle_menus import battle_menu
 from bot.menus.special_menus import special_cards_menu, revive_pokemon_menu
 from bot.menus.select_menus import select_dogemon_menu, select_attack_menu
-from bot.utils import game_service
 from bot.models.game import Game
+from bot.utils import game_service
 from bot.models.player import Player
 from bot.utils.config_reader import config
 from bot.utils.other import special_by_emoji
 
 router = Router()
-
-
-@router.message(F.chat.type != "private", Text(startswith="/gb "))
-async def group_battle(message: types.Message, state: FSMContext):
-    print("start group battle")
-    # available_chats = config.available_chat_ids.split(',')
-    # if str(message.chat.id) not in available_chats:
-    #     return
-
-    try:
-        bet = int(message.text.removeprefix('/gb '))
-        if bet <= 0:
-            raise ValueError
-    except ValueError:
-        return await message.answer('Bet must be integer and bigger than 0!')
-
-    err = await pre_game_check(message.from_user, int(bet))
-    if err:
-        return await message.answer(err)
-
-    players = {
-        'blue': [message.from_user.id],
-        'red': [],
-        str(message.from_user.id): message.from_user.first_name
-    }
-
-    pre_battle_id = await create_pre_battle(players)
-    players['id'] = pre_battle_id
-    await update_pre_battle(pre_battle_id, players)
-
-    text, kb = bot.menus.waiting_menus.waiting_group_battle_menu(bet, players, pre_battle_id)
-    image_bytes = get_image_bytes('image1.jpg')
-
-    await message.answer_photo(
-        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
-        caption=text,
-        reply_markup=kb
-    )
-
-
-@router.callback_query(Text(startswith='group_battle|'))
-async def join_group_battle(call: types.CallbackQuery, state: FSMContext):
-    print("join group battle")
-    _, bet, team, pre_battle_id = call.data.split('|')
-
-    err = await pre_game_check(call.from_user, int(bet))
-    if err:
-        return await call.message.answer(err)
-
-    players = await get_pre_battle(pre_battle_id)
-    players[team].append(call.from_user.id)
-    players[str(call.from_user.id)] = call.from_user.first_name
-    await update_pre_battle(pre_battle_id, players)
-
-    if len(players['blue']) == 2 and len(players['red']) == 2:
-        await process_start_game(call, state, players, int(bet), is_group=True)
-        return
-
-    text, kb = bot.menus.waiting_menus.waiting_group_battle_menu(bet, players, pre_battle_id)
-    await call.message.edit_caption(caption=text, reply_markup=kb)
-
-
-@router.message(F.chat.type != "private", Text(startswith="/battle "))
-async def start_battle(message: types.Message, state: FSMContext):
-    print("start battle")
-    # available_chats = config.available_chat_ids.split(',')
-    # if str(message.chat.id) not in available_chats:
-    #     return
-
-    try:
-        bet = int(message.text.removeprefix('/battle '))
-        if bet <= 0:
-            raise ValueError
-    except ValueError:
-        return await message.answer('Bet must be integer and bigger than 0!')
-
-    err = await pre_game_check(message.from_user, int(bet))
-    if err:
-        return await message.answer(err)
-
-    text, kb = bot.menus.waiting_menus.waiting_battle_menu(message.from_user, bet)
-    image_bytes = get_image_bytes('image1.jpg')
-
-    await message.answer_photo(
-        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
-        caption=text,
-        reply_markup=kb
-    )
-
-
-@router.callback_query(Text(startswith='join_battle'))
-async def join_battle(call: types.CallbackQuery, state: FSMContext):
-    _, player_1_id, bet = call.data.split('|')
-
-    player_1_id = int(player_1_id)
-
-    if call.from_user.id == player_1_id:
-        return await call.answer('You cannot battle with yourself!')
-
-    bet = int(bet) if bet != 'None' else None
-    err = await pre_game_check(call.from_user, bet)
-    if err:
-        return await call.answer(err)
-
-    if bet is not None:
-        await take_money_from_players(player_1_id, call.from_user.id, bet)
-
-    players = {
-        'blue': [player_1_id],
-        'red': [call.from_user.id]
-    }
-    await process_start_game(call, state, players, int(bet))
 
 
 @router.callback_query(Text(startswith='select_dogemon_menu|'))
@@ -213,7 +95,8 @@ async def fight_menu(call: types.CallbackQuery, state: FSMContext):
         return
 
     if action == 'flee':
-        return await process_end_game(call, state, game, win_type='flee')
+        await process_end_game(call, state, game, win_type='flee')
+        return
 
 
 @router.callback_query(Text(startswith='fight|'))
@@ -343,68 +226,20 @@ async def cancel_battle(call: types.CallbackQuery, state: FSMContext):
     await call.message.delete()
 
 
-async def process_start_game(call, state, players, bet, is_group=False):
-    players1 = []
-    players2 = []
-    for index, player_id in enumerate(players['blue'] + players['red']):
-        # if is_group:
-        #     player = await state.bot.get_chat(player_id)
-
-        if index % 2 == 0:
-            players1.append(await Player.new(await state.bot.get_chat(player_id)))
-        else:
-            players2.append(await Player.new(await state.bot.get_chat(player_id)))
-
-    game = Game.new(
-        players1 + players2,
-        bet=bet,
-        chat_id=call.message.chat.id
-    )
-
-    game = await game_service.save_game(game)
-
-    await state.update_data(flood_limit=None)
-
-    await call.message.edit_caption(caption='Shuffling cards...')
-    await asyncio.sleep(1)
-    await call.message.edit_caption(caption='Game started!')
-    await asyncio.sleep(1)
-    await call.message.delete()
-
-    text, kb = bot.menus.select_menus.select_dogemon_menu(game, first_move=True)
-    image_bytes = get_image_bytes('image2.jpg')
-
-    msg = await call.message.answer_photo(
-        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
-        caption=text,
-        reply_markup=kb
-    )
-
-    game.set_msg_id(msg.message_id)
-    await game_service.save_game(game)
-
-
 async def process_end_game(call, state, game, win_type):
-    db_game = await db.get_game(game.game_id)
-    pool = db_game['bet'] * 2 if db_game['bet'] else 0
+    pool = game.bet * len(game.players) if game.bet else 0
     reward = math.floor(pool * REWARD)
     burnt = math.floor(pool * PRIZE_POOL)
 
     if win_type == 'flee':
         winner_team, looser_team = game.game_over_coz_flee(call.from_user.id)
-        winners = ' '.join([player.mention for player in winner_team])
-        loosers = ' '.join([player.mention for player in looser_team])
-        text = f'{winners} won {reward} $POKECARD while {loosers} fled the battle and {burnt} will be burnt'
+        text = f'{to_mention(winner_team)} won {reward} $POKECARD while {to_mention(looser_team)} fled the battle and {burnt} will be burnt'
     elif win_type == 'clear':
         looser_team, winner_team = game.get_attacker_defencer_team()
-        winners = '\n'.join([player.mention for player in winner_team])
-        loosers = '\n'.join([player.mention for player in looser_team])
-        text = f'{winners} won {reward} $POKECARD. {loosers} has no PokéCards left'
+        text = f'{to_mention(winner_team)} won {reward} $POKECARD. {to_mention(looser_team)} has no PokéCards left'
     elif win_type == 'timeout':
         winner_team, looser_team = game.is_game_over_coz_timeout()
-        winners = '\n'.join([player.mention for player in winner_team])
-        loosers = '\n'.join([player.mention for player in looser_team])
-        text = f"{winners} won {reward} $POKECARD while {loosers} was inactive"
+        text = f"{to_mention(winner_team)} won {reward} $POKECARD while {to_mention(looser_team)} was inactive"
     else:
         raise ValueError(f'Unknown loose_type: {win_type}')
 
@@ -413,6 +248,23 @@ async def process_end_game(call, state, game, win_type):
 
     # if bot is admin
     await kick_user(state, call.message.chat.id, looser_team, winner_team)
+
+
+async def end_game(winner_ids: [int], game: Game):
+    await db.update_game(game.game_id, {'winner': winner_ids})
+
+    if game.bet is None:
+        return
+    coef = len(game.players)
+    for_winner = game.bet * coef * REWARD
+    prize_pool = game.bet * coef * PRIZE_POOL
+
+    await db.deposit_tokens(winner_ids, for_winner/len(winner_ids))
+    await db.deposit_burn(prize_pool)
+
+
+def to_mention(team):
+    return ', '.join([player.mention for player in team])
 
 
 async def try_to_edit_caption(call, state, text, kb):
@@ -467,11 +319,3 @@ async def kick_user(state, chat_id, loosers: [Player], winners: [Player]):
         await state.bot.send_message(chat_id, f"User {', '.join(loosers)} lost and was kicked!")
     except exceptions.TelegramBadRequest:
         print('Im not a admin!')
-
-
-def get_image_bytes(name):
-    path = Path(__file__).parent.parent / 'data' / 'images' / name
-    photo_path = os.path.join(path)
-
-    with open(photo_path, "rb") as photo_file:
-        return photo_file.read()

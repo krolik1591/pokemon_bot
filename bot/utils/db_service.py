@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from bot.data.const import POTION, REVIVE, SLEEPING_PILLS
 from bot.db.db import mongodb
 
@@ -23,6 +25,10 @@ class DbService:
 
         return special_cards
 
+    @staticmethod
+    async def withdraw_tokens(player_ids: [int], amount: int, game_id):
+        new_withdraw = {'txnHash': game_id, 'value': amount, 'time': datetime.now()}
+        await mongodb['users'].update_many({'tg_userid': {'$in': player_ids}}, {'$push': {'withdrawals': new_withdraw}})
 
 
 items_from_db = {

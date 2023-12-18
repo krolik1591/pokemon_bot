@@ -194,7 +194,7 @@ async def add_new_special(user_id):
     await mongodb['users'].update_one({'tg_userid': user_id}, {'$set': {'items': special}})
 
 
-async def find(user_id):
+async def get_user(user_id):
     return await mongodb['users'].find_one({'tg_userid': user_id})
 
 
@@ -207,7 +207,7 @@ if __name__ == '__main__':
     async def main():
         # x = await get_active_game(357108179)
         # await lower_item(357108179, 'potion')
-        x = await get_active_games(357108179)
+        x = await get_user(357108179)
         print(x)
 
 

@@ -19,8 +19,8 @@ def waiting_battle_menu(user: User, bet):
 
 
 def waiting_group_battle_menu(bet, players, pre_battle_id):
-    text_blue = 'Blue team:\n'
-    text_red = 'Yellow team:\n'
+    text_blue = '🔹 Blue team:\n'
+    text_red = '🔸 Yellow team:\n'
     for blue_player_id in players['blue']:
         link = markdown.hlink(players[str(blue_player_id)], create_tg_link("user", id=blue_player_id))
         text_blue += f"     {link}\n"
@@ -33,7 +33,7 @@ def waiting_group_battle_menu(bet, players, pre_battle_id):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text=f'Join BLUE ({len(players["blue"])}/2)', callback_data=f"group_battle|{bet}|blue|{pre_battle_id}"),
-            InlineKeyboardButton(text=f'Join RED ({len(players["red"])}/2)', callback_data=f"group_battle|{bet}|red|{pre_battle_id}"),
+            InlineKeyboardButton(text=f'Join YELLOW ({len(players["red"])}/2)', callback_data=f"group_battle|{bet}|red|{pre_battle_id}"),
 
         ],
         [InlineKeyboardButton(text='Cancel', callback_data=f"cancel_battle|{players['blue'][0]}")],

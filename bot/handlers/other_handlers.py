@@ -8,8 +8,8 @@ from aiogram.utils.link import create_tg_link
 
 from bot.data.const import REWARD
 from bot.db import db
-from bot.REWORK_IT import end_game
-from bot.handlers.battle_handlers import get_image_bytes, kick_user
+from bot.handlers.battle_handlers import kick_user, end_game
+from bot.handlers.pre_battle_handlers import get_image_bytes
 from bot.utils import game_service
 
 router = Router()
