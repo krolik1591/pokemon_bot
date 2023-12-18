@@ -156,12 +156,15 @@ class Game:
         return actions
 
     def end_move(self):
-        a = 1
+        print("move end", self.who_move)
         for i in range(len(self.players)):
-            self.who_move = self.who_move + a if self.who_move + a < len(self.players) else 0
-            if self.is_player_has_pokemon(self.get_attacker()):
-                self.update_last_move_time()
-                break
+            self.who_move = (self.who_move + 1) % len(self.players)
+            if not self.is_player_has_pokemon(self.get_attacker()):
+                print(f"move end continue: {self.who_move} can't attack")
+                continue
+            self.update_last_move_time()
+            print(f"now move {self.who_move}")
+            return
 
     @staticmethod
     def is_player_has_pokemon(player: Player):
@@ -239,9 +242,6 @@ class Game:
 
     def get_attacker(self) -> Optional[Player]:
         return self.players[self.who_move]
-
-    def set_attacker(self, player_index: int):
-        self.who_move = player_index
 
     def is_player_attacks_now(self, player_id: int):
         return self.players[self.who_move].id == player_id

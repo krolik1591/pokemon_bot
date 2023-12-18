@@ -33,12 +33,15 @@ async def player_select_dogemon(call: types.CallbackQuery, state: FSMContext):
 
     game = await game_service.get_game(game_id)
 
-    if not game.is_player_attacks_now(call.from_user.id):
+    if call.from_user.id != int(who_need_pok):
         return await call.answer('You cannot select PokéCards now!')
 
+    # todo
     # need to working `BACK` button
     if pokemon != 'None':
-        game.select_pokemon(pokemon)
+        player = game.get_player_by_id(int(who_need_pok))
+        game.select_pokemon(pokemon, player)
+        await game_service.save_game(game)
 
     if not game.is_all_pokemons_selected():
         print('not all pokemons selected')
@@ -215,6 +218,8 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
     _, game_id, whos_attack = call.data.split('|')
 
     game = await game_service.get_game(game_id)
+
+    # todo check that whos_attack is in attacker_team ?
 
     _, defender_team = game.get_attacker_defencer_team()
 

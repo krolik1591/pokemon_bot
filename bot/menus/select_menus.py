@@ -4,6 +4,7 @@ from bot.data.const import BLUE_TEAM, RED_TEAM, IS_DONATE_EMOJI
 from bot.data.dogemons import DOGEMONS_MAP
 from bot.menus.utils_for_menus import _inline_btn, _timeout_btn, _pokemon_text_small, _actions_text, _columns, _back_btn
 from bot.models.game import Game
+from bot.models.player import Player
 from bot.models.spell import Spell
 
 
@@ -12,8 +13,6 @@ def select_dogemon_menu(game: Game, who_select: Player, first_move=False, latest
         btn_text = _pokemon_text_small(DOGEMONS_MAP[pokemon_name], is_link=True)
         return InlineKeyboardButton(text=btn_text,
                                     callback_data=f"select_pok|{pokemon_name}|{game.game_id}|{who_select.id}")
-
-    attacker = game.get_attacker()
 
     actions_text = _actions_text(latest_actions)
     select_pok_text = f'The first move is yours, {who_select.mention}, choose your PokéCard!' \
@@ -42,8 +41,10 @@ def select_dogemon_menu(game: Game, who_select: Player, first_move=False, latest
     return text, kb
 
 
-def select_defender_menu(game: Game, item_name, is_special: str, is_donate=False):
-    attacker_team, defender_team = game.get_attacker_defencer_team()
+def select_defender_menu(game: Game, item_name, is_special: bool, is_donate=False):
+    is_special = 'T' if is_special else 'F'
+    _, defender_team = game.get_attacker_defencer_team()
+
     defenders_btns = []
     for defender in defender_team:
         defender_index = game.players.index(defender)

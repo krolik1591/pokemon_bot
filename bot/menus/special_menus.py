@@ -13,9 +13,11 @@ def special_cards_menu(game: Game, donate_special: list):
 
     print('random special cards: ', attacker.special_cards)
     special_btns = []
-    if len(attacker[0].special_cards) == 1:
-        text = f"{SPECIAL_EMOJI[attacker[0].special_cards[0]]} {attacker[0].special_cards[0]}"
-        callback_data = set_callback_special(game, SPECIAL_EMOJI[attacker[0].special_cards[0]], defender_index, is_donate=False)
+
+    if len(attacker.special_cards) == 1:
+        card = attacker.special_cards[0]
+        text = f"{SPECIAL_EMOJI[card]} {card}"
+        callback_data = set_callback_special(game, SPECIAL_EMOJI[card], defender_index, is_donate=False)
         special_btns.append(_inline_btn(text, callback_data))
 
     for index, special_card in enumerate(donate_special):
