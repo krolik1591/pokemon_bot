@@ -217,15 +217,6 @@ async def timeout(call: types.CallbackQuery, state: FSMContext):
     await call.answer()
 
 
-@router.callback_query(Text(startswith='cancel_battle'))
-async def cancel_battle(call: types.CallbackQuery, state: FSMContext):
-    _, who_started = call.data.split('|')
-    if call.from_user.id != int(who_started):
-        return await call.answer("It's not your msg!")
-
-    await call.message.delete()
-
-
 async def process_end_game(call, state, game, win_type):
     pool = game.bet * len(game.players) if game.bet else 0
     reward = math.floor(pool * REWARD)

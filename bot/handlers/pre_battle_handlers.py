@@ -41,6 +41,7 @@ async def group_battle(message: types.Message, state: FSMContext):
     players = {
         'blue': [message.from_user.id],
         'red': [],
+        'bet': bet,
         str(message.from_user.id): message.from_user.first_name
     }
 
@@ -134,6 +135,33 @@ async def join_battle(call: types.CallbackQuery, state: FSMContext):
     }
 
     await process_start_game(call, state, players['blue'] + players['red'], int(bet))
+
+
+@router.callback_query(Text(startswith='cancel_battle'))
+async def cancel_battle(call: types.CallbackQuery, state: FSMContext):
+    _, who_started, pre_battle_id = call.data.split('|')
+    if pre_battle_id == '1x1':
+        if call.from_user.id != int(who_started):
+            return await call.answer("It's not your msg!")
+        await call.message.delete()
+        return
+
+    if call.from_user.id == int(who_started):
+        await call.message.delete()
+        return
+
+    players = await db.get_pre_battle(pre_battle_id)
+    if call.from_user.id not in players['red'] + players['blue']:
+        return await call.answer("You are not in this battle!")
+
+    if call.from_user.id in players['red']:
+        players['red'].remove(call.from_user.id)
+    if call.from_user.id in players['blue']:
+        players['blue'].remove(call.from_user.id)
+    await update_pre_battle(pre_battle_id, players)
+
+    text, kb = bot.menus.waiting_menus.waiting_group_battle_menu(players['bet'], players, pre_battle_id)
+    await call.message.edit_caption(caption=text, reply_markup=kb)
 
 
 async def process_start_game(call, state, players: [int], bet):

@@ -207,7 +207,7 @@ if __name__ == '__main__':
     async def main():
         # x = await get_active_game(357108179)
         # await lower_item(357108179, 'potion')
-        x = await get_user(357108179)
+        x = await get_user_balance(357108179)
         print(x)
 
 
