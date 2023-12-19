@@ -78,11 +78,11 @@ class Player:
         return markdown.hlink(self.name, create_tg_link("user", id=self.id))
 
     @classmethod
-    async def new(cls, user: Chat | User):
+    async def new(cls, user: Chat | User, is_qbattle: bool):
         return cls(
             id=user.id,
             name=user.first_name,
-            pokemons_pool=get_pokemons_pool(),
+            pokemons_pool=get_pokemons_pool(is_qbattle),
             last_move_time=time.time(),
             special_cards=get_random_special(),
             sleeping_pills_counter=None,
@@ -132,13 +132,11 @@ class Player:
         return heal_amount
 
 
-def get_pokemons_pool():
-    # return {
-    #     'Snorlex': True,
-    #     'Pidgei': True,
-    # }
+def get_pokemons_pool(is_qbattle):
     pokemons = [dogemon.name for dogemon in DOGEMONS]
     random.shuffle(pokemons)
+    if is_qbattle:
+        return {pokemons[0]: True}
     return {dogemon: True for dogemon in pokemons[:3]}  # 3 random pokemons, True means that pokemon is alive
 
 

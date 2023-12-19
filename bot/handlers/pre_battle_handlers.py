@@ -10,6 +10,7 @@ import bot.menus
 from bot.data.const import MAX_ACTIVE_GAMES
 from bot.db import db, methods as db
 from bot.db.methods import create_pre_battle, update_pre_battle, get_pre_battle
+from bot.menus.battle_menus import battle_menu
 from bot.models.game import Game
 from bot.models.player import Player
 from bot.utils import game_service
@@ -18,6 +19,85 @@ from bot.utils.db_service import DbService
 from bot.utils.other import get_mention
 
 router = Router()
+
+
+@router.message(F.chat.type != "private", Text(startswith="/qbattle "))
+async def start_battle(message: types.Message, state: FSMContext):
+    print("start quick battle")
+    # available_chats = config.available_chat_ids.split(',')
+    # if str(message.chat.id) not in available_chats:
+    #     return
+
+    try:
+        bet = int(message.text.removeprefix('/qbattle '))
+        if bet <= 0:
+            raise ValueError
+    except ValueError:
+        return await message.answer('Bet must be integer and bigger than 0!')
+
+    err = await pre_game_check(message.from_user.id, message.from_user.first_name, int(bet))
+    if err:
+        return await message.answer(err)
+
+    text, kb = bot.menus.waiting_menus.waiting_battle_menu(message.from_user, bet, is_qbattle=True)
+    image_bytes = get_image_bytes('qbattle.jpg')
+
+    await message.answer_photo(
+        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
+        caption=text,
+        reply_markup=kb
+    )
+
+
+@router.message(F.chat.type != "private", Text(startswith="/battle "))
+async def start_battle(message: types.Message, state: FSMContext):
+    print("start battle")
+    available_chats = config.available_chat_ids.split(',')
+    if str(message.chat.id) not in available_chats:
+        return
+
+    try:
+        bet = int(message.text.removeprefix('/battle '))
+        if bet <= 0:
+            raise ValueError
+    except ValueError:
+        return await message.answer('Bet must be integer and bigger than 0!')
+
+    err = await pre_game_check(message.from_user.id, message.from_user.first_name, int(bet))
+    if err:
+        return await message.answer(err)
+
+    text, kb = bot.menus.waiting_menus.waiting_battle_menu(message.from_user, bet, is_qbattle=False)
+    image_bytes = get_image_bytes('image1.jpg')
+
+    await message.answer_photo(
+        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
+        caption=text,
+        reply_markup=kb
+    )
+
+
+@router.callback_query(Text(startswith='join_battle'))
+async def join_battle(call: types.CallbackQuery, state: FSMContext):
+    _, player_1_id, bet, is_qbattle = call.data.split('|')
+
+    player_1_id = int(player_1_id)
+
+    if call.from_user.id == player_1_id:
+        return await call.answer('You cannot battle with yourself!')
+
+    bet = int(bet) if bet != 'None' else None
+    err = await pre_game_check(call.from_user.id, call.from_user.first_name, bet)
+    if err:
+        return await call.answer(err)
+
+    players = {
+        'blue': [player_1_id],
+        'red': [call.from_user.id]
+    }
+
+    is_qbattle = True if is_qbattle == 'True' else False
+    await process_start_game(call, state, players['blue'] + players['red'], int(bet), is_qbattle)
 
 
 @router.message(F.chat.type != "private", Text(startswith="/gbattle "))
@@ -50,7 +130,7 @@ async def group_battle(message: types.Message, state: FSMContext):
     await update_pre_battle(pre_battle_id, players)
 
     text, kb = bot.menus.waiting_menus.waiting_group_battle_menu(bet, players, pre_battle_id)
-    image_bytes = get_image_bytes('image1.jpg')
+    image_bytes = get_image_bytes('image3.jpg')
 
     await message.answer_photo(
         photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
@@ -80,61 +160,11 @@ async def join_group_battle(call: types.CallbackQuery, state: FSMContext):
     await update_pre_battle(pre_battle_id, players)
 
     if len(players['blue']) == 2 and len(players['red']) == 2:
-        await process_start_game(call, state, players['blue'] + players['red'], int(bet))
+        await process_start_game(call, state, players['blue'] + players['red'], int(bet), is_qbattle=False)
         return
 
     text, kb = bot.menus.waiting_menus.waiting_group_battle_menu(bet, players, pre_battle_id)
     await call.message.edit_caption(caption=text, reply_markup=kb)
-
-
-@router.message(F.chat.type != "private", Text(startswith="/battle "))
-async def start_battle(message: types.Message, state: FSMContext):
-    print("start battle")
-    available_chats = config.available_chat_ids.split(',')
-    if str(message.chat.id) not in available_chats:
-        return
-
-    try:
-        bet = int(message.text.removeprefix('/battle '))
-        if bet <= 0:
-            raise ValueError
-    except ValueError:
-        return await message.answer('Bet must be integer and bigger than 0!')
-
-    err = await pre_game_check(message.from_user.id, message.from_user.first_name, int(bet))
-    if err:
-        return await message.answer(err)
-
-    text, kb = bot.menus.waiting_menus.waiting_battle_menu(message.from_user, bet)
-    image_bytes = get_image_bytes('image1.jpg')
-
-    await message.answer_photo(
-        photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
-        caption=text,
-        reply_markup=kb
-    )
-
-
-@router.callback_query(Text(startswith='join_battle'))
-async def join_battle(call: types.CallbackQuery, state: FSMContext):
-    _, player_1_id, bet = call.data.split('|')
-
-    player_1_id = int(player_1_id)
-
-    if call.from_user.id == player_1_id:
-        return await call.answer('You cannot battle with yourself!')
-
-    bet = int(bet) if bet != 'None' else None
-    err = await pre_game_check(call.from_user.id, call.from_user.first_name, bet)
-    if err:
-        return await call.answer(err)
-
-    players = {
-        'blue': [player_1_id],
-        'red': [call.from_user.id]
-    }
-
-    await process_start_game(call, state, players['blue'] + players['red'], int(bet))
 
 
 @router.callback_query(Text(startswith='cancel_battle'))
@@ -164,7 +194,7 @@ async def cancel_battle(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_caption(caption=text, reply_markup=kb)
 
 
-async def process_start_game(call, state, players: [int], bet):
+async def process_start_game(call, state, players: [int], bet, is_qbattle):
     players1 = []
     players2 = []
     for index, player_id in enumerate(players):
@@ -175,9 +205,9 @@ async def process_start_game(call, state, players: [int], bet):
             return await call.message.answer(err)
 
         if index % 2 == 0:
-            players1.append(await Player.new(player_data))
+            players1.append(await Player.new(player_data, is_qbattle=is_qbattle))
         else:
-            players2.append(await Player.new(player_data))
+            players2.append(await Player.new(player_data, is_qbattle=is_qbattle))
 
     game = Game.new(
         players1 + players2,
@@ -196,6 +226,23 @@ async def process_start_game(call, state, players: [int], bet):
     await call.message.edit_caption(caption='Game started!')
     await asyncio.sleep(1)
     await call.message.delete()
+
+    if is_qbattle:
+        for player in game.players:
+            player.select_pokemon(list(player.pokemons_pool.keys())[0])
+
+        image_bytes = get_image_bytes('qbattle.jpg')
+        text, kb = battle_menu(game)
+
+        msg = await call.message.answer_photo(
+            photo=types.BufferedInputFile(image_bytes, filename="image1.png"),
+            caption=text,
+            reply_markup=kb
+        )
+
+        game.set_msg_id(msg.message_id)
+        await game_service.save_game(game)
+        return
 
     who_select = game.who_doesnt_select_pokemon()
     text, kb = bot.menus.select_menus.select_dogemon_menu(game, who_select, first_move=True)

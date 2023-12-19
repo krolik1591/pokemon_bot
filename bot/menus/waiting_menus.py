@@ -3,7 +3,7 @@ from aiogram.utils import markdown
 from aiogram.utils.link import create_tg_link
 
 
-def waiting_battle_menu(user: User, bet):
+def waiting_battle_menu(user: User, bet, is_qbattle):
     text = f'{user.mention_html()} waiting for an opponent...'
     if bet:
         text += f'\n\nBet: {bet}'
@@ -11,7 +11,7 @@ def waiting_battle_menu(user: User, bet):
         text += '\n\nNo bet'
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text='Join', callback_data=f"join_battle|{user.id}|{bet}"),
+            InlineKeyboardButton(text='Join', callback_data=f"join_battle|{user.id}|{bet}|{is_qbattle}"),
             InlineKeyboardButton(text='Cancel', callback_data=f"cancel_battle|{user.id}|1x1")],
     ])
 
